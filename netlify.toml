@@ -2,7 +2,7 @@
   publish = "."
 
 [[headers]]
-  for = "/assets/*"
+  for = "/*.png"
   [headers.values]
     Cache-Control = "public, max-age=604800"
 
