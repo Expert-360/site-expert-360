@@ -99,6 +99,40 @@
 #restart{align-self:flex-start}
 @media (max-width:980px){.result-grid{grid-template-columns:1fr}.gate-box{margin-top:-160px}}
 @media (max-width:600px){.audit-form .btn{flex:1 1 100%}.steps li{font-size:17px}.season span{font-size:9px}}
+.insight-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-top:24px}
+.insight-wide{grid-column:1/-1}
+.insight h3{font-size:clamp(19px,1.6vw,23px)}
+.insight-note{font-size:14px !important}
+.rank-list{list-style:none;margin:0;padding:0;display:grid;gap:10px;counter-reset:r}
+.rank-list li{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:4px 10px;align-items:center;counter-increment:r;padding:6px 0;border-bottom:1px solid var(--line)}
+.rank-list li:last-child{border-bottom:0}
+.rank-list li::before{content:counter(r);font-family:var(--mono);font-size:13px;color:var(--muted)}
+.rank-list b{font-size:16px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rank-list small{font-family:var(--mono);font-size:12.5px;color:var(--muted);text-align:right;white-space:nowrap}
+.rank-list i{grid-column:2/4;display:block;height:5px;border-radius:9px;background:var(--orange)}
+.rank-dark li{border-color:rgba(255,255,255,.12)}
+.rank-dark li::before,.rank-dark small{color:var(--muted-dark)}
+.locked{filter:blur(5px);user-select:none;pointer-events:none;opacity:.75}
+tr.locked td{filter:blur(5px)}
+.more-row{list-style:none}
+.lock-tag{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:12px;letter-spacing:.04em;text-transform:uppercase;background:var(--navy);color:#fff;padding:6px 12px;border-radius:99px}
+.rank-dark .lock-tag,.card-dark .lock-tag{background:var(--orange);color:var(--navy)}
+.lock-tag::before{content:"🔒";font-size:11px}
+.lock-line{display:flex;justify-content:center;padding-top:6px}
+.locked-wrap{position:relative}
+.locked-wrap .lock-season{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
+.unlock{flex-direction:row !important;align-items:center;justify-content:space-between;gap:28px !important;flex-wrap:wrap;margin-top:24px;position:sticky;bottom:16px;z-index:5;box-shadow:0 18px 50px rgba(14,42,59,.3)}
+.unlock-text{max-width:460px;display:grid;gap:8px}
+.unlock-text h3{color:#fff;font-size:clamp(20px,1.8vw,26px)}
+.unlock-form{display:flex;flex-wrap:wrap;gap:10px;flex:1 1 380px;max-width:560px}
+.unlock-form input[type=email]{flex:1 1 240px;min-height:54px;border:0;border-radius:999px;padding:0 22px;font:inherit;font-size:17px;color:var(--navy)}
+.unlock-form input:focus{outline:3px solid var(--orange);outline-offset:2px}
+.unlock-form .btn{min-height:54px}
+.unlock-legal{flex-basis:100%;font-size:12.5px !important;color:var(--muted-dark) !important}
+.unlock-legal a{text-decoration:underline;color:inherit}
+.unlock.done{display:none}
+@media (max-width:980px){.insight-grid{grid-template-columns:1fr}.unlock{position:static}}
+
 </style>
 <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebApplication","@id":"https://expert-360.ca/audit-google-ads#app","name":"Audit Google Ads gratuit","url":"https://expert-360.ca/audit-google-ads","applicationCategory":"BusinessApplication","operatingSystem":"Web","inLanguage":"fr-CA","description":"Entrez votre site et découvrez en quelques secondes le potentiel Google Ads de votre secteur au Québec : recherches par mois, coût par clic, concurrence et saisonnalité.","offers":{"@type":"Offer","price":"0","priceCurrency":"CAD"},"provider":{"@id":"https://expert-360.ca/#org"}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Accueil","item":"https://expert-360.ca/"},{"@type":"ListItem","position":2,"name":"Acquisition PPC","item":"https://expert-360.ca/acquisition-ppc"},{"@type":"ListItem","position":3,"name":"Audit Google Ads gratuit","item":"https://expert-360.ca/audit-google-ads"}]}]}</script>
 </head>
@@ -165,57 +199,67 @@
 <p class="score-label" id="r-label"></p>
 </div>
 <div class="kpi-col">
-<div class="card kpi-card"><span class="eyebrow">Recherches par mois</span><b id="r-vol">–</b><p>sur les 50 principaux mots-clés de votre secteur au Québec</p></div>
+<div class="card kpi-card"><span class="eyebrow">Volume de recherche global</span><b id="r-vol">–</b><p>recherches par mois au Québec sur les mots-clés de votre secteur</p></div>
 <div class="card kpi-card"><span class="eyebrow">Coût moyen d'un clic</span><b id="r-cpc">–</b><p>en haut de page, pondéré par le volume</p></div>
 <div class="card kpi-card"><span class="eyebrow">Concurrence</span><b id="r-comp">–</b><p>nombre d'annonceurs qui se battent pour ces recherches</p></div>
 </div>
 </div>
 
-<div class="preview-grid">
-<div class="card"><span class="eyebrow">Les recherches phares de votre secteur</span><h3 id="r-hook"></h3>
-<div class="table-wrap"><table class="kw-table"><thead><tr><th>Ce que vos clients tapent</th><th>Recherches/mois</th><th>Coût par clic</th><th>Concurrence</th></tr></thead><tbody id="r-phares"></tbody></table></div></div>
-<div class="card card-dark comp-card"><span class="eyebrow">Vos concurrents sur Google</span><h3 id="r-comp-title">Ils sont déjà cherchés par leur nom</h3><ol id="r-comp-list" class="comp-list"></ol><p id="r-comp-note"></p></div>
+<div class="insight-grid">
+<div class="card insight insight-wide">
+<span class="eyebrow">Mots-clés principaux</span>
+<h3 id="r-hook">Ce que vos clients tapent sur Google</h3>
+<div class="table-wrap"><table class="kw-table"><thead><tr><th>Mot-clé</th><th>Recherches/mois</th><th>Coût par clic</th><th>Concurrence</th></tr></thead><tbody id="r-kw"></tbody></table></div>
+</div>
+<div class="card card-dark insight">
+<span class="eyebrow">Concurrents</span>
+<h3 id="r-comp-title">Qui capte les recherches</h3>
+<ol id="r-comp-list" class="rank-list rank-dark"></ol>
+<p class="insight-note" id="r-comp-note"></p>
+</div>
+<div class="card insight">
+<span class="eyebrow">Régions</span>
+<h3>Où vos clients cherchent</h3>
+<ol id="r-reg" class="rank-list"></ol>
+</div>
+<div class="card insight">
+<span class="eyebrow">Opportunités</span>
+<h3>Recherches peu disputées à saisir</h3>
+<ol id="r-opp" class="rank-list"></ol>
+</div>
+<div class="card insight">
+<span class="eyebrow">Saisonnalité</span>
+<h3>Vos mois forts et faibles</h3>
+<div class="locked-wrap"><div id="r-season" class="season" role="img" aria-label="Saisonnalité disponible dans le rapport complet"></div><div class="lock-tag lock-season">Rapport complet</div></div>
+<p id="r-season-note" class="insight-note"></p>
+</div>
 </div>
 
-<div id="gate" class="gate">
-<div class="gate-preview" aria-hidden="true">
-<div class="fake-row"></div><div class="fake-row"></div><div class="fake-row"></div><div class="fake-row"></div>
-</div>
-<div class="gate-box card">
-<span class="eyebrow">Rapport complet gratuit</span>
-<h3>Recevez l'analyse détaillée de votre secteur</h3>
-<ul class="gate-list"><li>Vos 15 meilleurs mots-clés, avec volume et coût par clic</li><li>Les opportunités peu concurrencées à saisir en premier</li><li>La saisonnalité : vos mois forts et faibles</li><li>Un budget de départ indicatif pour votre secteur</li></ul>
-<form id="lead-form" name="audit-google-ads" method="POST" data-netlify="true" netlify-honeypot="bot-field" class="lead-form">
+<div class="card card-dark unlock" id="unlock">
+<div class="unlock-text"><h3>Débloquez le rapport complet</h3><p>Tous les mots-clés, tous les concurrents, toutes les régions et opportunités, la saisonnalité et un budget de départ pour votre secteur.</p></div>
+<form id="lead-form" name="audit-google-ads" method="POST" data-netlify="true" netlify-honeypot="bot-field" class="unlock-form">
 <input type="hidden" name="form-name" value="audit-google-ads">
 <p hidden><label>Ne pas remplir <input name="bot-field"></label></p>
 <input type="hidden" name="site"><input type="hidden" name="score"><input type="hidden" name="recherches"><input type="hidden" name="cpc"><input type="hidden" name="concurrence">
-<label for="lead-name">Prénom</label><input id="lead-name" name="prenom" type="text" autocomplete="given-name" required>
-<label for="lead-email">Courriel professionnel</label><input id="lead-email" name="courriel" type="email" autocomplete="email" required>
-<label for="lead-company">Entreprise (facultatif)</label><input id="lead-company" name="entreprise" type="text" autocomplete="organization">
-<label class="consent"><input type="checkbox" name="consentement" value="oui" required> J'accepte qu'Expert 360 me contacte au sujet de cette analyse. <a href="/confidentialite">Confidentialité</a></label>
-<button class="btn btn-orange" type="submit">Voir mon rapport complet</button>
+<label class="sr-only" for="lead-email">Votre courriel</label>
+<input id="lead-email" name="courriel" type="email" autocomplete="email" placeholder="votre@courriel.ca" required>
+<button class="btn btn-orange" type="submit">Débloquer</button>
+<p class="unlock-legal">En envoyant votre courriel, vous acceptez qu'Expert 360 vous contacte au sujet de cette analyse. <a href="/confidentialite">Confidentialité</a></p>
 <p id="lead-error" class="audit-error" role="alert" hidden></p>
 </form>
-</div>
 </div>
 
 <div id="report" class="report" hidden>
 <div class="grid-2 report-top">
-<div class="card"><span class="eyebrow">Saisonnalité au Québec</span><h3>Mois le plus fort : <span id="r-peak" class="accent"></span></h3><div id="r-season" class="season" role="img"></div><p id="r-season-note"></p></div>
 <div class="card card-muted"><span class="eyebrow">Budget de départ indicatif</span><h3><span id="r-budget"></span> / mois</h3><p id="r-budget-note"></p><p id="r-brand"></p></div>
-</div>
-<div class="card table-card"><span class="eyebrow">Vos 15 principaux mots-clés</span>
-<div class="table-wrap"><table class="kw-table"><thead><tr><th>Mot-clé</th><th>Recherches/mois</th><th>Coût par clic</th><th>Concurrence</th></tr></thead><tbody id="r-kw"></tbody></table></div>
-</div>
-<div class="card" id="comp-full-card"><span class="eyebrow">Tous les concurrents repérés</span><div id="r-comp-full" class="chips opp-chips"></div><p>Ces noms sont cherchés sur Google au Québec. Une campagne bien construite vous place à côté d'eux, au moment où le client compare.</p></div>
-<div class="card" id="opp-card"><span class="eyebrow">Opportunités : volume correct, concurrence faible</span><div id="r-opp" class="chips opp-chips"></div></div>
 <div class="card card-dark cta-card">
 <div><h3>Transformer ce potentiel en demandes ?</h3><p>On regarde ensemble votre compte et votre site, et on vous dit honnêtement ce qui rapporterait le plus. 30 minutes, sans engagement.</p></div>
 <a class="btn btn-orange" href="https://calendly.com/lamri-l8ih/30min" target="_blank" rel="noopener">Réserver un appel <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a>
 </div>
-<p class="audit-note">Source : Google Ads Keyword Planner, moyenne des 12 derniers mois, Québec, recherches en français. Les volumes sont des estimations de Google. Le budget indicatif suppose environ 5 % de clics sur ces recherches.</p>
-<button class="btn btn-outline btn-sm" type="button" id="restart">Analyser un autre site</button>
 </div>
+</div>
+<p class="audit-note">Source : Google Ads Keyword Planner, moyenne des 12 derniers mois, Québec, recherches en français. Les concurrents sont les marques que Google repère dans les recherches de votre secteur. Les volumes sont des estimations de Google.</p>
+<button class="btn btn-outline btn-sm" type="button" id="restart">Analyser un autre site</button>
 </div>
 </section>
 
@@ -242,6 +286,6 @@
 </div>
 </footer>
 <script src="/site.js" defer></script>
-<script src="/audit.js?v=3" defer></script>
+<script src="/audit.js?v=4" defer></script>
 </body>
 </html>

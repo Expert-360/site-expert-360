@@ -1,14 +1,18 @@
 // Expert 360 — outil d'audit Google Ads (page /audit-google-ads)
+// Aperçu : 3 éléments visibles par bloc, le reste flouté. Le courriel débloque le rapport complet.
 (function () {
   var $ = function (id) { return document.getElementById(id); };
   var form = $('audit-form'), input = $('audit-url'), err = $('audit-error');
   var progress = $('audit-progress'), result = $('audit-result');
-  var data = null;
+  var data = null, unlocked = false, VISIBLE = 3;
   var nf = new Intl.NumberFormat('fr-CA');
   var money = function (v) { return new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: v < 100 ? 2 : 0 }).format(v); };
   var wait = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
+  var el = function (tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
+  // Texte de remplacement pour les lignes floutées : la vraie donnée n'est pas dans la page avant le déblocage.
+  var fake = function (n) { return '■■■■■■■■■■■■■■■■■■'.slice(0, n); };
 
-  function showError(el, msg) { el.textContent = msg; el.hidden = !msg; }
+  function showError(e, msg) { e.textContent = msg; e.hidden = !msg; }
 
   function animateSteps() {
     var items = progress.querySelectorAll('.steps li'), fill = $('pbar-fill'), i = 0;
@@ -32,7 +36,7 @@
     var url = input.value.trim();
     if (!url || url.indexOf('.') === -1) { showError(err, 'Entrez une adresse valide, par exemple : votresite.ca'); input.focus(); return; }
     var btn = form.querySelector('button'); btn.disabled = true;
-    result.hidden = true; $('report').hidden = true; $('gate').hidden = false;
+    result.hidden = true; $('report').hidden = true; unlocked = false; $('unlock').classList.remove('done');
     $('p-site').textContent = url.replace(/^https?:\/\//, '').replace(/\/$/, '');
     progress.hidden = false;
     progress.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -45,7 +49,10 @@
       data = res.j;
       await wait(300);
       progress.hidden = true;
-      renderPreview();
+      render();
+      result.hidden = false;
+      result.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      animateScore(data.apercu.score);
     } catch (ex) {
       progress.hidden = true;
       showError(err, ex.message || "L'analyse n'a pas pu aboutir. Réessayez dans un instant.");
@@ -53,30 +60,141 @@
     } finally { btn.disabled = false; }
   });
 
-  function renderPreview() {
-    var a = data.apercu;
+  function animateScore(target) {
+    var arc = $('g-arc'), sc = $('r-score'), t0 = Date.now();
+    arc.style.transition = 'none'; arc.style.strokeDashoffset = '327';
+    setTimeout(function () {
+      arc.style.transition = 'stroke-dashoffset 1.2s cubic-bezier(.65,0,.35,1)';
+      arc.style.strokeDashoffset = String(327 * (1 - target / 100));
+    }, 60);
+    var timer = setInterval(function () {
+      var n = Math.round(target * Math.min(1, (Date.now() - t0) / 1200));
+      sc.textContent = n;
+      if (n >= target) clearInterval(timer);
+    }, 30);
+  }
+
+  function lockTag(n, label) {
+    var t = el('span', 'lock-tag', n > 0 ? '+ ' + n + ' ' + label + ' · rapport complet' : 'Rapport complet');
+    return t;
+  }
+
+  // Liste classée : nom, valeur, barre. Les éléments au-delà de VISIBLE sont floutés tant que ce n'est pas débloqué.
+  function rankList(ol, items, opts) {
+    ol.innerHTML = '';
+    var max = items.length ? (items[0].value || 1) : 1;
+    var shown = unlocked ? items : items.slice(0, VISIBLE);
+    shown.forEach(function (it) {
+      var li = el('li');
+      li.appendChild(el('b', '', it.name));
+      li.appendChild(el('small', '', it.label));
+      if (opts.bars) { var bar = el('i'); bar.style.width = Math.max(6, Math.round((it.value / max) * 100)) + '%'; li.appendChild(bar); }
+      ol.appendChild(li);
+    });
+    if (!unlocked && items.length) {
+      var hidden = Math.max(0, items.length - VISIBLE);
+      var ghosts = Math.min(hidden || 2, 3);
+      for (var i = 0; i < ghosts; i++) {
+        var li = el('li', 'locked');
+        li.appendChild(el('b', '', fake(10 + (i * 5) % 8)));
+        li.appendChild(el('small', '', fake(6)));
+        ol.appendChild(li);
+      }
+      var tagLi = el('li', 'more-row lock-line'); tagLi.style.gridTemplateColumns = '1fr';
+      tagLi.appendChild(lockTag(hidden, opts.unit));
+      ol.appendChild(tagLi);
+    }
+    if (!items.length) {
+      var empty = el('li', 'more-row', opts.empty); empty.style.gridTemplateColumns = '1fr'; ol.appendChild(empty);
+    }
+  }
+
+  function badge(level) {
+    var cls = { 'Faible': 'b-faible', 'Moyenne': 'b-moyenne', 'Élevée': 'b-elevee' }[level] || '';
+    return el('span', 'badge ' + cls, level);
+  }
+  function cpcText(k) { return k.cpcBas !== null ? money(k.cpcBas) + ' – ' + money(k.cpcHaut) : '—'; }
+
+  function renderKeywords(list) {
+    var tb = $('r-kw'); tb.innerHTML = '';
+    var shown = unlocked ? list : list.slice(0, VISIBLE);
+    shown.forEach(function (k) {
+      var tr = el('tr');
+      tr.appendChild(el('td', '', k.mot));
+      tr.appendChild(el('td', '', nf.format(k.volume)));
+      tr.appendChild(el('td', '', cpcText(k)));
+      var td = el('td'); td.appendChild(badge(k.concurrence)); tr.appendChild(td);
+      tb.appendChild(tr);
+    });
+    if (!unlocked) {
+      var hidden = Math.max(0, list.length - VISIBLE);
+      for (var i = 0; i < Math.min(hidden, 4); i++) {
+        var tr = el('tr', 'locked');
+        tr.appendChild(el('td', '', fake(14 + (i * 3) % 6)));
+        tr.appendChild(el('td', '', fake(5)));
+        tr.appendChild(el('td', '', fake(12)));
+        tr.appendChild(el('td', '', fake(7)));
+        tb.appendChild(tr);
+      }
+      var trTag = el('tr'), tdTag = el('td'); tdTag.colSpan = 4; tdTag.className = 'lock-line';
+      tdTag.appendChild(lockTag(hidden, 'mots-clés')); trTag.appendChild(tdTag); tb.appendChild(trTag);
+    }
+    var top = list.filter(function (k) { return k.cpcBas !== null; })[0];
+    $('r-hook').textContent = top
+      ? '« ' + top.mot + ' » : ' + nf.format(top.volume) + ' recherches par mois, et un clic vaut ' + cpcText(top) + '.'
+      : 'Ce que vos clients tapent sur Google';
+  }
+
+  function renderSeason(r) {
+    var s = $('r-season'); s.innerHTML = '';
+    var max = Math.max.apply(null, r.saisonnalite.map(function (m) { return m.recherches; })) || 1;
+    r.saisonnalite.forEach(function (m) {
+      var col = el('div', 'sbar' + (unlocked && m.mois === r.moisFort ? ' peak' : ''));
+      var b = el('i');
+      // Avant déblocage : barres de forme neutre (la vraie courbe n'est pas révélée).
+      b.style.height = (unlocked ? Math.max(4, Math.round((m.recherches / max) * 100)) : 40 + ((m.mois.length * 13) % 45)) + '%';
+      col.appendChild(b);
+      col.appendChild(el('span', '', window.innerWidth < 600 ? m.mois.charAt(0).toUpperCase() : m.mois));
+      s.appendChild(col);
+    });
+    s.classList.toggle('locked', !unlocked);
+    document.querySelector('.lock-season').hidden = unlocked;
+    $('r-season-note').textContent = unlocked
+      ? 'Mois le plus fort : ' + r.moisFort + '. Mois le plus faible : ' + r.moisFaible + '. Le budget doit suivre cette courbe.'
+      : 'Vos mois forts et faibles sont dans le rapport complet.';
+  }
+
+  function render() {
+    var a = data.apercu, r = data.rapport;
     $('r-site').textContent = data.site;
     $('r-title').textContent = a.scoreLabel + ' pour ' + data.site;
     $('r-label').textContent = a.scoreLabel;
     $('r-vol').textContent = nf.format(a.recherchesMois);
     $('r-cpc').textContent = money(a.cpcMoyen);
     $('r-comp').textContent = a.concurrence;
-    result.hidden = false;
-    result.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    var arc = $('g-arc'), sc = $('r-score'), target = a.score, n = 0;
-    arc.style.transition = 'stroke-dashoffset 1.2s cubic-bezier(.65,0,.35,1)';
-    requestAnimationFrame(function () { arc.style.strokeDashoffset = String(327 * (1 - target / 100)); });
-    var t0 = Date.now();
-    var timer = setInterval(function () {
-      n = Math.min(target, Math.round(target * Math.min(1, (Date.now() - t0) / 1200)));
-      sc.textContent = n;
-      if (n >= target) clearInterval(timer);
-    }, 30);
-    renderPhares(a);
-    renderCompetitors(a.concurrents || [], data.rapport.concurrents || []);
-    var lf = $('lead-form');
-    lf.site.value = data.site; lf.score.value = a.score; lf.recherches.value = a.recherchesMois;
-    lf.cpc.value = a.cpcMoyen; lf.concurrence.value = a.concurrence;
+
+    renderKeywords(r.motsCles);
+
+    var comps = r.concurrents || [];
+    $('r-comp-title').textContent = comps.length ? 'Qui capte les recherches de votre secteur' : 'Aucun concurrent ne domine';
+    rankList($('r-comp-list'), comps.map(function (c) { return { name: c.nom, value: c.recherches, label: nf.format(c.recherches) + '/mois' }; }),
+      { bars: true, unit: 'concurrents', empty: "Personne n'a imposé son nom dans vos recherches : le terrain est libre." });
+    $('r-comp-note').textContent = comps.length ? 'Recherches mensuelles sur leur nom au Québec.' : '';
+
+    var regs = data.regions || [];
+    rankList($('r-reg'), regs.map(function (g) { return { name: g.ville, value: g.recherches, label: nf.format(g.recherches) + '/mois' }; }),
+      { bars: true, unit: 'villes', empty: 'Répartition par ville disponible dans le rapport complet.' });
+
+    var opps = r.opportunites || [];
+    rankList($('r-opp'), opps.map(function (k) { return { name: k.mot, value: k.volume, label: nf.format(k.volume) + '/mois · ' + (k.cpcBas !== null ? money(k.cpcBas) : '—') }; }),
+      { bars: false, unit: 'opportunités', empty: 'Pas d’opportunité peu disputée repérée : votre secteur est très concurrentiel.' });
+
+    renderSeason(r);
+
+    var f = $('lead-form').elements;
+    f.namedItem('site').value = data.site; f.namedItem('score').value = a.score;
+    f.namedItem('recherches').value = a.recherchesMois; f.namedItem('cpc').value = a.cpcMoyen;
+    f.namedItem('concurrence').value = a.concurrence;
   }
 
   $('lead-form').addEventListener('submit', async function (e) {
@@ -88,88 +206,24 @@
     try {
       var r = await fetch('/', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(new FormData(lf)).toString() });
       if (!r.ok) throw new Error();
-      renderReport();
+      unlocked = true;
+      render();
+      renderReportExtras();
+      $('unlock').classList.add('done');
+      $('report').hidden = false;
+      document.querySelector('.insight-grid').scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch (ex) {
-      showError(le, "L'envoi n'a pas fonctionné. Vérifiez votre connexion et réessayez.");
+      showError(le, "L'envoi n'a pas fonctionné. Vérifiez votre courriel et réessayez.");
     } finally { btn.disabled = false; }
   });
 
-  function cell(text) { var td = document.createElement('td'); td.textContent = text; return td; }
-
-  function badgeCell(level) {
-    var td = document.createElement('td'), b = document.createElement('span');
-    var cls = { 'Faible': 'b-faible', 'Moyenne': 'b-moyenne', 'Élevée': 'b-elevee' }[level] || '';
-    b.className = 'badge ' + cls; b.textContent = level; td.appendChild(b); return td;
-  }
-
-  function cpcText(k) { return k.cpcBas !== null ? money(k.cpcBas) + ' – ' + money(k.cpcHaut) : '—'; }
-
-  function kwRow(k) {
-    var tr = document.createElement('tr');
-    tr.appendChild(cell(k.mot));
-    tr.appendChild(cell(nf.format(k.volume)));
-    tr.appendChild(cell(cpcText(k)));
-    tr.appendChild(badgeCell(k.concurrence));
-    return tr;
-  }
-
-  function renderPhares(a) {
-    var tb = $('r-phares'); tb.innerHTML = '';
-    (a.motsClesPhares || []).forEach(function (k) { tb.appendChild(kwRow(k)); });
-    var top = (a.motsClesPhares || []).filter(function (k) { return k.cpcBas !== null; })[0];
-    $('r-hook').textContent = top
-      ? '« ' + top.mot + ' » : ' + nf.format(top.volume) + ' recherches par mois, et un clic vaut ' + cpcText(top) + '.'
-      : nf.format(a.recherchesMois) + ' recherches par mois sur vos services au Québec.';
-  }
-
-  function renderCompetitors(list, full) {
-    var ol = $('r-comp-list'); ol.innerHTML = '';
-    if (!list.length) {
-      $('r-comp-title').textContent = 'Aucun concurrent ne domine';
-      $('r-comp-note').textContent = "Personne n'a encore imposé son nom dans vos recherches au Québec. Le terrain est libre : le premier à investir prend la place.";
-    } else {
-      $('r-comp-title').textContent = list.length + ' concurrent' + (list.length > 1 ? 's' : '') + ' déjà cherché' + (list.length > 1 ? 's' : '') + ' par leur nom';
-      var max = list[0].recherches || 1;
-      list.forEach(function (c) {
-        var li = document.createElement('li'), b = document.createElement('b'), sm = document.createElement('small'), bar = document.createElement('i');
-        b.textContent = c.nom; sm.textContent = nf.format(c.recherches) + '/mois';
-        bar.style.width = Math.max(6, Math.round((c.recherches / max) * 100)) + '%';
-        li.appendChild(b); li.appendChild(sm); li.appendChild(bar); ol.appendChild(li);
-      });
-      $('r-comp-note').textContent = 'Recherches mensuelles sur leur nom au Québec. Avec Google Ads, votre annonce peut apparaître quand vos clients les comparent.';
-    }
-    var fc = $('r-comp-full'); fc.innerHTML = '';
-    if (full.length) {
-      full.forEach(function (c) { var s = document.createElement('span'); s.className = 'chip'; s.textContent = c.nom + ' · ' + nf.format(c.recherches) + '/mois'; fc.appendChild(s); });
-    } else { $('comp-full-card').hidden = true; }
-  }
-
-  function renderReport() {
+  function renderReportExtras() {
     var r = data.rapport;
-    $('gate').hidden = true;
-    var rep = $('report'); rep.hidden = false;
-    $('r-peak').textContent = r.moisFort;
-    var max = Math.max.apply(null, r.saisonnalite.map(function (m) { return m.recherches; })) || 1;
-    var s = $('r-season'); s.innerHTML = '';
-    s.setAttribute('aria-label', 'Recherches par mois, plus fort en ' + r.moisFort + ', plus faible en ' + r.moisFaible);
-    r.saisonnalite.forEach(function (m) {
-      var col = document.createElement('div'); col.className = 'sbar' + (m.mois === r.moisFort ? ' peak' : '');
-      var b = document.createElement('i'); b.style.height = Math.max(4, Math.round((m.recherches / max) * 100)) + '%';
-      b.title = m.mois + ' : ' + nf.format(m.recherches) + ' recherches';
-      var l = document.createElement('span'); l.textContent = window.innerWidth < 600 ? m.mois.charAt(0).toUpperCase() : m.mois;
-      col.appendChild(b); col.appendChild(l); s.appendChild(col);
-    });
-    $('r-season-note').textContent = 'Mois le plus faible : ' + r.moisFaible + '. Le budget doit suivre cette courbe.';
     $('r-budget').textContent = money(r.budgetIndicatif);
     $('r-budget-note').textContent = 'Pour environ ' + nf.format(r.clicsEstimes) + ' clics par mois au coût moyen de votre secteur. À ajuster selon vos objectifs et vos marges.';
-    $('r-brand').textContent = r.recherchesMarque > 0 ? ('Votre nom est déjà cherché environ ' + nf.format(r.recherchesMarque) + ' fois par mois.') : "Votre nom d'entreprise est encore peu cherché sur Google : la pub peut accélérer votre notoriété.";
-    var tb = $('r-kw'); tb.innerHTML = '';
-    r.motsCles.forEach(function (k) { tb.appendChild(kwRow(k)); });
-    var o = $('r-opp'); o.innerHTML = '';
-    if (r.opportunites.length) {
-      r.opportunites.forEach(function (k) { var c = document.createElement('span'); c.className = 'chip'; c.textContent = k.mot + ' · ' + nf.format(k.volume) + '/mois'; o.appendChild(c); });
-    } else { $('opp-card').hidden = true; }
-    rep.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    $('r-brand').textContent = r.recherchesMarque > 0
+      ? ('Votre nom est déjà cherché environ ' + nf.format(r.recherchesMarque) + ' fois par mois.')
+      : "Votre nom d'entreprise est encore peu cherché sur Google : la pub peut accélérer votre notoriété.";
   }
 
   $('restart').addEventListener('click', function () {
