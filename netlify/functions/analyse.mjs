@@ -142,6 +142,16 @@ export default async (req) => {
     return json({ error: "L'analyse est momentanément indisponible. Réessayez dans quelques minutes." }, 502);
   }
 
+  if (body.debug === "concepts-tmp") {
+    const agg = new Map();
+    for (const res of raw) {
+      for (const c of ((res.keywordAnnotations || {}).concepts || [])) {
+        const key = (c.conceptGroup?.type || "?") + " | " + (c.conceptGroup?.name || "?") + " | " + c.name;
+        agg.set(key, (agg.get(key) || 0) + Number(res.keywordIdeaMetrics?.avgMonthlySearches || 0));
+      }
+    }
+    return json([...agg.entries()].sort((a, b) => b[1] - a[1]).slice(0, 80));
+  }
   const all = dedupe(raw.map(toIdea).filter((k) => k.keyword && k.volume > 0));
   if (all.length === 0) {
     return json({ site: site.host, empty: true, message: "Pas assez de données de recherche au Québec pour ce site." });
