@@ -338,3 +338,10 @@ section{position:relative}
 .foot-grid img{align-self:flex-start}
 .ai-final b,.seq .s{white-space:nowrap}
 @media (max-width:700px){.logos .eyebrow{width:100%}.logo-row{flex-basis:100%}}
+
+/* Marque fictive (client anonymisé) */
+.fict-mark{display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--navy,#0E2A3B);text-align:center}
+.fict-mark b{white-space:nowrap;font-size:30px;font-weight:800;font-stretch:125%;letter-spacing:-0.03em;line-height:1}
+.fict-mark span{font-family:var(--mono);font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted,#4B5D69)}
+.case .note,.case-big .note{font-family:var(--mono);font-size:12px;color:var(--muted,#4B5D69)}
+@media (max-width:640px){.fict-mark b{font-size:26px}}
