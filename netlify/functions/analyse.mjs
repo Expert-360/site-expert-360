@@ -158,11 +158,25 @@ export default async (req) => {
     norm(k.keyword).split(/[^a-z0-9]+/).some((w) => brandSet.has(w)) || k.brands.some(isOwnName);
 
   // Concurrents : marques repérées par Google dans les recherches du secteur (hors votre marque).
+  // Google marque aussi des expressions génériques (« déménagement rive sud ») : on ne garde
+  // que les noms qui contiennent un mot distinctif, rare dans l'ensemble des recherches.
+  const wordCount = new Map();
+  for (const k of all) {
+    for (const w of new Set(norm(k.keyword).split(/[^a-z0-9]+/))) {
+      if (w.length >= 2) wordCount.set(w, (wordCount.get(w) || 0) + 1);
+    }
+  }
+  const rareMax = Math.max(2, Math.round(all.length * 0.01));
+  const STOP = new Set(["les", "des", "pour", "avec", "and", "the", "inc", "ltee", "cie", "chez", "aux", "sur", "une", "dans"]);
+  const isRealBrand = (name) =>
+    norm(name).split(/[^a-z0-9]+/).some((w) => w.length >= 2 && !STOP.has(w) && (wordCount.get(w) || 0) <= rareMax);
+  const titleCase = (s) => s.replace(/(^|[\s'’-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
+
   const compMap = new Map();
   for (const k of all) {
     if (isBrand(k)) continue;
     for (const name of new Set(k.brands)) {
-      if (isOwnName(name)) continue;
+      if (isOwnName(name) || !isRealBrand(name)) continue;
       const e = compMap.get(name) || { nom: name, recherches: 0, motCle: k.keyword, top: 0 };
       e.recherches += k.volume;
       if (k.volume > e.top) { e.top = k.volume; e.motCle = k.keyword; }
@@ -172,11 +186,12 @@ export default async (req) => {
   const concurrents = [...compMap.values()]
     .sort((a, b) => b.recherches - a.recherches)
     .slice(0, 8)
-    .map(({ nom, recherches, motCle }) => ({ nom, recherches, motCle }));
+    .map(({ nom, recherches, motCle }) => ({ nom: titleCase(nom), recherches, motCle }));
 
   const brand = all.filter(isBrand);
-  // Le marché exclut votre marque et celles des concurrents (recherches de marque = hors portée).
-  const market = all.filter((k) => !isBrand(k) && k.brands.length === 0).sort((a, b) => b.volume - a.volume);
+  // Le marché exclut votre marque et les recherches sur le nom d'un concurrent.
+  const isCompetitorSearch = (k) => k.brands.some((n) => !isOwnName(n) && isRealBrand(n));
+  const market = all.filter((k) => !isBrand(k) && !isCompetitorSearch(k)).sort((a, b) => b.volume - a.volume);
   const top = market.slice(0, 50);
 
   const totalVolume = top.reduce((s, k) => s + k.volume, 0);
