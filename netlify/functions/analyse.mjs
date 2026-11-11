@@ -90,6 +90,10 @@ function toIdea(res) {
       .filter((c) => c.conceptGroup && /BRAND/.test(c.conceptGroup.type || "") && c.conceptGroup.type !== "NON_BRAND")
       .map((c) => c.name)
       .filter(Boolean),
+    generic: ((res.keywordAnnotations || {}).concepts || [])
+      .filter((c) => !c.conceptGroup || !/BRAND/.test(c.conceptGroup.type || "") || c.conceptGroup.type === "NON_BRAND")
+      .map((c) => c.name)
+      .filter(Boolean),
   };
 }
 
@@ -142,16 +146,6 @@ export default async (req) => {
     return json({ error: "L'analyse est momentanément indisponible. Réessayez dans quelques minutes." }, 502);
   }
 
-  if (body.debug === "concepts-tmp") {
-    const agg = new Map();
-    for (const res of raw) {
-      for (const c of ((res.keywordAnnotations || {}).concepts || [])) {
-        const key = (c.conceptGroup?.type || "?") + " | " + (c.conceptGroup?.name || "?") + " | " + c.name;
-        agg.set(key, (agg.get(key) || 0) + Number(res.keywordIdeaMetrics?.avgMonthlySearches || 0));
-      }
-    }
-    return json([...agg.entries()].sort((a, b) => b[1] - a[1]).slice(0, 80));
-  }
   const all = dedupe(raw.map(toIdea).filter((k) => k.keyword && k.volume > 0));
   if (all.length === 0) {
     return json({ site: site.host, empty: true, message: "Pas assez de données de recherche au Québec pour ce site." });
@@ -170,16 +164,24 @@ export default async (req) => {
   // Concurrents : marques repérées par Google dans les recherches du secteur (hors votre marque).
   // Google marque aussi des expressions génériques (« déménagement rive sud ») : on ne garde
   // que les noms qui contiennent un mot distinctif, rare dans l'ensemble des recherches.
-  const wordCount = new Map();
+  // Vocabulaire générique : concepts « Ville / Activité / Autres » de Google, mots les plus
+  // fréquents du secteur et une liste de mots courants. Une marque réelle doit contenir
+  // au moins un mot hors de ce vocabulaire (ex. « Transat », « Doyle », « La Capitale »).
+  const GENERIC = new Set(("les des pour avec and the inc ltee cie chez aux sur une dans par mon ma mes son vos votre " +
+    "petit petite grand grande pro professionnel professionnels expert experts express rapide efficace economique fiable " +
+    "meilleur meilleure prix cout soumission soumissions devis avis service services entreprise compagnie " +
+    "nord sud est ouest rive centre ville region distance longue grande local locale " +
+    "piano equipement location camion boite boites carton cartons " +
+    "monteregie laurentides lanaudiere estrie mauricie outaouais abitibi gaspesie saguenay beauce charlevoix " +
+    "saint sainte paris france belgique suisse canada quebec montreal").split(" "));
+  const freq = new Map();
   for (const k of all) {
-    for (const w of new Set(norm(k.keyword).split(/[^a-z0-9]+/))) {
-      if (w.length >= 2) wordCount.set(w, (wordCount.get(w) || 0) + 1);
-    }
+    for (const w of new Set(norm(k.keyword).split(/[^a-z0-9]+/))) if (w) freq.set(w, (freq.get(w) || 0) + 1);
+    for (const g of k.generic) for (const w of norm(g).split(/[^a-z0-9]+/)) if (w) GENERIC.add(w);
   }
-  const rareMax = Math.max(2, Math.round(all.length * 0.01));
-  const STOP = new Set(["les", "des", "pour", "avec", "and", "the", "inc", "ltee", "cie", "chez", "aux", "sur", "une", "dans"]);
+  [...freq.entries()].sort((a, b) => b[1] - a[1]).slice(0, 40).forEach(([w]) => GENERIC.add(w));
   const isRealBrand = (name) =>
-    norm(name).split(/[^a-z0-9]+/).some((w) => w.length >= 2 && !STOP.has(w) && (wordCount.get(w) || 0) <= rareMax);
+    norm(name).split(/[^a-z0-9]+/).some((w) => w.length >= 3 && !/^\d+$/.test(w) && !GENERIC.has(w));
   const titleCase = (s) => s.replace(/(^|[\s'’-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
 
   const compMap = new Map();
