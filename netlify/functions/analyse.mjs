@@ -101,7 +101,8 @@ function toIdea(res) {
 function dedupe(ideas) {
   const seen = new Set();
   return ideas.filter((k) => {
-    const key = [k.volume, k.low, k.high].join("|");
+    const c = (v) => (v === null ? "-" : Math.round(v * 10));
+    const key = [k.volume, c(k.low), c(k.high)].join("|");
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
