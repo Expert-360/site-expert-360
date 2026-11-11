@@ -41,19 +41,28 @@
       .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); });
   };
 
-  form.addEventListener('submit', async function (e) {
+  var lastUrl = '';
+
+  form.addEventListener('submit', function (e) {
     e.preventDefault();
     showError(err, '');
     var url = input.value.trim();
     if (!url || url.indexOf('.') === -1) { showError(err, 'Entrez une adresse valide, par exemple : votresite.ca'); input.focus(); return; }
+    lancer(url, '');
+  });
+
+  async function lancer(url, metier) {
+    lastUrl = url;
     var btn = form.querySelector('button'); btn.disabled = true;
     result.hidden = true; $('report').hidden = true; unlocked = false; $('unlock').classList.remove('done');
+    $('unlock-fab').hidden = true; $('metier-form').hidden = true;
     $('p-site').textContent = url.replace(/^https?:\/\//, '').replace(/\/$/, '');
     progress.hidden = false;
     progress.scrollIntoView({ behavior: 'smooth', block: 'start' });
     try {
-      var siteCall = post('/api/site', { url: url }).then(function (r) { return r.ok ? r.j : null; }).catch(function () { return null; });
-      var out = await Promise.all([post('/api/analyse', { url: url }), siteCall, animateSteps()]);
+      var siteCall = (metier && site) ? Promise.resolve(site)
+        : post('/api/site', { url: url }).then(function (r) { return r.ok ? r.j : null; }).catch(function () { return null; });
+      var out = await Promise.all([post('/api/analyse', { url: url, metier: metier }), siteCall, animateSteps()]);
       var res = out[0];
       if (!res.ok) throw new Error(res.j.error || 'Erreur');
       if (res.j.empty) throw new Error(res.j.message);
@@ -71,6 +80,25 @@
       showError(err, ex.message || "L'analyse n'a pas pu aboutir. Réessayez dans un instant.");
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally { btn.disabled = false; }
+  }
+
+  // Métier analysé : affiché en puces, corrigeable par le visiteur.
+  function renderMetier() {
+    var box = $('r-metier'); box.innerHTML = '';
+    var list = (data.metier || []).slice(0, 6);
+    if (!list.length) { box.appendChild(el('span', 'metier-none', 'déduit des recherches liées à votre site')); }
+    list.forEach(function (m) { box.appendChild(el('span', 'chip metier-chip', m)); });
+    $('metier-input').value = (data.metier || []).slice(0, 6).join(', ');
+  }
+  $('metier-edit').addEventListener('click', function () {
+    var f = $('metier-form'); f.hidden = !f.hidden;
+    if (!f.hidden) $('metier-input').focus();
+  });
+  $('metier-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var v = $('metier-input').value.trim();
+    if (v.length < 3) { $('metier-input').focus(); return; }
+    lancer(lastUrl, v);
   });
 
   function animateGauge(arc, label, target) {
@@ -280,6 +308,7 @@
 
   function render() {
     var a = data.apercu, r = data.rapport, gr = data.graphes || {};
+    renderMetier();
     $('r-site').textContent = data.site;
     $('r-title').textContent = a.scoreLabel + ' pour ' + data.site;
     $('r-label').textContent = a.scoreLabel;
@@ -318,6 +347,7 @@
     f.namedItem('recherches').value = a.recherchesMois; f.namedItem('cpc').value = a.cpcMoyen;
     f.namedItem('concurrence').value = a.concurrence;
     f.namedItem('pret').value = site && site.ok ? site.score : '';
+    f.namedItem('metier').value = (data.metier || []).slice(0, 6).join(', ');
   }
 
   $('lead-form').addEventListener('submit', async function (e) {

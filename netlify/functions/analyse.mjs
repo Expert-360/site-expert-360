@@ -3,6 +3,8 @@
 // Renvoie : score de potentiel, volumes, CPC, concurrence, saisonnalité, mots-clés.
 // Les identifiants viennent des variables d'environnement Netlify (jamais du code).
 
+import { lirePage, extraireMetier, NEGATIFS, MOTS_LARGES, parseSite as parseUrl } from "../lib/lecture.mjs";
+
 const API = "https://googleads.googleapis.com/v24";
 const GEO_QUEBEC = "geoTargetConstants/20123";
 const LANG_FR = "languageConstants/1002";
@@ -120,7 +122,8 @@ function brandWords(host, ideas) {
   }
   const brand = new Set();
   for (const [w, n] of freq) {
-    if (token.includes(w) && n / ideas.length < 0.15) brand.add(w);
+    // Le mot doit couvrir une bonne part du nom (« sol » ne représente pas « genisol »).
+    if (token.includes(w) && w.length >= Math.max(4, Math.ceil(token.length * 0.6)) && n / ideas.length < 0.15) brand.add(w);
   }
   if (token.length >= 3 && !freq.has(token)) brand.add(token);
   return brand;
@@ -243,6 +246,27 @@ function intention(kw) {
   return "Recherche du service";
 }
 
+
+// Racines du métier : 6 premières lettres des mots porteurs de sens.
+// En français, le premier mot porte le métier (« évaluation environnementale », « décontamination des sols ») :
+// il est « fort ». Les suivants qualifient (« environnementale », « sols ») : « faibles », ils ne suffisent pas
+// seuls à rendre une recherche pertinente (ex. « météo environnement canada »).
+function racines(metier) {
+  const fortes = new Set(), faibles = new Set();
+  for (const m of metier) {
+    const mots = norm(m).split(/[^a-z0-9]+/).filter((w) => w.length >= 4 && !MOTS_LARGES.has(w) && !/^\d+$/.test(w)).map((w) => w.slice(0, 6));
+    mots.forEach((r, i) => (i === 0 ? fortes : faibles).add(r));
+  }
+  for (const r of fortes) faibles.delete(r);
+  return { fortes, faibles };
+}
+function pertinent(texte, { fortes, faibles }) {
+  const mots = norm(texte).split(/[^a-z0-9]+/).filter((w) => w.length >= 4).map((w) => w.slice(0, 6));
+  return { fort: mots.some((r) => fortes.has(r)), faible: mots.some((r) => faibles.has(r)) };
+}
+// Organismes et sites qui ne sont pas des concurrents.
+const PAS_CONCURRENT = /^(environnement canada|gouvernement|gouv|ministere|ville de|meteomedia|meteo|wikipedia|google|youtube|facebook|instagram|kijiji|indeed|jobboom|revenu quebec|service canada|statistique canada|canada|quebec|montreal|radio canada|la presse|le devoir|tva)/;
+
 const compLabel = (i) => (i === null ? "Inconnue" : i < 34 ? "Faible" : i < 67 ? "Moyenne" : "Élevée");
 const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
 const round = (x, d = 2) => Math.round(x * 10 ** d) / 10 ** d;
@@ -254,15 +278,31 @@ export default async (req) => {
   const site = parseSite(body.url);
   if (!site) return json({ error: "Adresse de site invalide. Exemple : votresite.ca" }, 400);
 
-  let raw, token;
+  // 1. Le métier : ce que le site vend, lu dans son titre, sa description, ses titres et son menu.
+  //    Le visiteur peut aussi le préciser lui-même (champ « metier », séparé par des virgules).
+  const precise = String(body.metier || "").split(",").map((x) => x.trim()).filter((x) => x.length >= 3 && x.length <= 60).slice(0, 8);
+  const lecture = precise.length ? Promise.resolve(precise)
+    : lirePage(new URL(parseUrl(site.url).origin + "/"), 5000).then((p) => extraireMetier(p.html, site.host)).catch((e) => {
+      console.error("analyse:lecture", site.host, String(e.message || e));
+      return [];
+    });
+
+  let raw, token, metier = [];
   try {
-    token = await getAccessToken();
-    raw = await keywordIdeas(token, { siteSeed: { site: site.host } });
-    if (raw.length < 10) raw = await keywordIdeas(token, { urlSeed: { url: site.url } });
-    // 2e passe : élargir à partir des 3 recherches principales du secteur (sans marque),
+    [token, metier] = await Promise.all([getAccessToken(), lecture]);
+    // 2. Les recherches partent du métier. Sans métier lisible, on se rabat sur le site lui-même.
+    if (metier.length >= 2) raw = await keywordIdeas(token, { keywordSeed: { keywords: metier.slice(0, 10) } });
+    if (!raw || raw.length < 10) {
+      raw = await keywordIdeas(token, { siteSeed: { site: site.host } });
+      if (raw.length < 10) raw = await keywordIdeas(token, { urlSeed: { url: site.url } });
+      if (metier.length < 2) metier = [];
+    }
+    // 2e passe : élargir à partir des 3 recherches principales du métier (sans marque),
     // pour faire ressortir davantage de concurrents. En cas d'échec, on garde la 1re passe.
     const seeds = raw
       .filter((r) => !((r.keywordAnnotations || {}).concepts || []).some((c) => /BRAND/.test(c.conceptGroup?.type || "") && c.conceptGroup.type !== "NON_BRAND"))
+      .filter((r) => !NEGATIFS.test(" " + norm(r.text).replace(/[^a-z0-9]+/g, " ") + " "))
+      .filter((r) => !metier.length || pertinent(r.text, racines(metier)).fort)
       .sort((a, b) => Number(b.keywordIdeaMetrics?.avgMonthlySearches || 0) - Number(a.keywordIdeaMetrics?.avgMonthlySearches || 0))
       .slice(0, 3)
       .map((r) => r.text);
@@ -280,7 +320,14 @@ export default async (req) => {
     return json({ error: "L'analyse est momentanément indisponible. Réessayez dans quelques minutes." }, 502);
   }
 
-  const all = dedupe(raw.map(toIdea).filter((k) => k.keyword && k.volume > 0));
+  const neg = (k) => NEGATIFS.test(" " + norm(k.keyword).replace(/[^a-z0-9]+/g, " ") + " ");
+  const all = dedupe(raw.map(toIdea).filter((k) => k.keyword && k.volume > 0 && !neg(k)));
+  const rac = metier.length ? racines(metier) : null;
+  // Recherche liée au métier : contient un mot porteur du métier (pas seulement un qualificatif).
+  // Si le filtre est trop strict pour ce site (moins de 15 recherches), on le relâche.
+  let duMetier = (k) => !rac || pertinent(k.keyword, rac).fort;
+  if (rac && all.filter(duMetier).length < 15) duMetier = (k) => { const p = pertinent(k.keyword, rac); return p.fort || p.faible; };
+  if (rac && all.filter(duMetier).length < 15) duMetier = () => true;
   if (all.length === 0) {
     return json({ site: site.host, empty: true, message: "Pas assez de données de recherche au Québec pour ce site." });
   }
@@ -289,7 +336,7 @@ export default async (req) => {
   const hostToken = norm(site.host.split(".")[0]).replace(/[^a-z0-9]/g, "");
   const isOwnName = (name) => {
     const n = norm(name).replace(/[^a-z0-9]/g, "");
-    return n.length >= 3 && (hostToken.includes(n) || n.includes(hostToken) ||
+    return n.length >= 3 && ((hostToken.includes(n) && n.length >= Math.max(4, Math.ceil(hostToken.length * 0.6))) || n.includes(hostToken) ||
       norm(name).split(/[^a-z0-9]+/).some((w) => brandSet.has(w)));
   };
   const isBrand = (k) =>
@@ -326,7 +373,9 @@ export default async (req) => {
   for (const k of all) {
     if (isBrand(k)) continue;
     for (const name of new Set(k.brands)) {
-      if (isOwnName(name) || !isRealBrand(name)) continue;
+      if (isOwnName(name) || !isRealBrand(name) || PAS_CONCURRENT.test(norm(name))) continue;
+      // La recherche doit toucher le métier, ou n'être que le nom du concurrent.
+      if (rac && !duMetier(k) && !pertinent(k.keyword, rac).faible && norm(k.keyword).replace(/[^a-z0-9]/g, "") !== norm(name).replace(/[^a-z0-9]/g, "")) continue;
       const e = compMap.get(name) || { nom: name, recherches: 0, motCle: k.keyword, top: 0 };
       e.recherches += k.volume;
       if (k.volume > e.top) { e.top = k.volume; e.motCle = k.keyword; }
@@ -341,10 +390,13 @@ export default async (req) => {
 
   const brand = all.filter(isBrand);
   // Le marché exclut votre marque et les recherches sur le nom d'un concurrent.
-  const isCompetitorSearch = (k) => k.brands.some((n) => !isOwnName(n) && isRealBrand(n));
+  const isCompetitorSearch = (k) => k.brands.some((n) => !isOwnName(n) && (isRealBrand(n) || PAS_CONCURRENT.test(norm(n))));
   // Recherches de produits (ex. « boîte de déménagement ») : forte concurrence mais clic bon marché = commerce en ligne.
   const isProduct = (k) => k.compIndex !== null && k.compIndex >= 67 && ((k.high !== null && k.high < 3.5) || (k.low !== null && k.low < 0.6));
-  const market = all.filter((k) => !isBrand(k) && !isCompetitorSearch(k) && !isProduct(k)).sort((a, b) => b.volume - a.volume);
+  const market = all.filter((k) => duMetier(k) && !isBrand(k) && !isCompetitorSearch(k) && !isProduct(k)).sort((a, b) => b.volume - a.volume);
+  if (!market.length) {
+    return json({ site: site.host, empty: true, message: "Pas assez de recherches Google au Québec pour ce métier." });
+  }
   const top = market.slice(0, 50);
 
   const totalVolume = top.reduce((s, k) => s + k.volume, 0);
@@ -427,6 +479,7 @@ export default async (req) => {
   return json({
     site: site.host,
     zone: "Québec",
+    metier,
     langue: "français",
     apercu: {
       score,

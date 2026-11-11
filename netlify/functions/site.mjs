@@ -3,60 +3,10 @@
 // Lit la page d'accueil et vérifie si le site est prêt pour la publicité :
 // balises de suivi, conversions, mobile, HTTPS, titre, description, appel, formulaire, temps de réponse.
 
+import { parseSite, lirePage as lire } from "../lib/lecture.mjs";
+
 const json = (body, status = 200) =>
   Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
-
-function parseSite(input) {
-  let raw = String(input || "").trim();
-  if (!raw) return null;
-  if (!/^https?:\/\//i.test(raw)) raw = "https://" + raw;
-  try {
-    const u = new URL(raw);
-    const h = u.hostname.toLowerCase();
-    if (!h.includes(".") || h.length > 253) return null;
-    if (/(^|\.)(localhost|local|internal|lan|home|corp)$/.test(h)) return null;
-    if (/^\d+\.\d+\.\d+\.\d+$/.test(h) || h.startsWith("[") || h.includes(":")) return null;
-    if (u.port && u.port !== "80" && u.port !== "443") return null;
-    return u;
-  } catch {
-    return null;
-  }
-}
-
-// Suit au plus 4 redirections, en revalidant chaque adresse (pas d'IP, pas de réseau interne).
-async function lire(u) {
-  let url = u, t0 = Date.now();
-  for (let i = 0; i < 5; i++) {
-    const r = await fetch(url.href, {
-      redirect: "manual",
-      signal: AbortSignal.timeout(7000),
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; Expert360-Audit/1.0; +https://expert-360.ca/audit-google-ads)",
-        Accept: "text/html,application/xhtml+xml",
-        "Accept-Language": "fr-CA,fr;q=0.9,en;q=0.6",
-      },
-    });
-    if (r.status >= 300 && r.status < 400 && r.headers.get("location")) {
-      const next = parseSite(new URL(r.headers.get("location"), url).href);
-      if (!next) throw new Error("redirect");
-      url = next;
-      continue;
-    }
-    if (!r.ok) throw new Error("http:" + r.status);
-    // On lit au plus 1,5 Mo
-    const reader = r.body.getReader();
-    let size = 0, chunks = [];
-    while (size < 1_500_000) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      chunks.push(value); size += value.length;
-    }
-    reader.cancel().catch(() => {});
-    const html = new TextDecoder().decode(Buffer.concat(chunks.map((c) => Buffer.from(c))));
-    return { html, final: url, ms: Date.now() - t0, poids: size };
-  }
-  throw new Error("redirects");
-}
 
 const strip = (s) => s.replace(/<[^>]+>/g, " ").replace(/&nbsp;|&#160;/g, " ").replace(/&amp;/g, "&").replace(/&#0?39;|&rsquo;/g, "'").replace(/\s+/g, " ").trim();
 

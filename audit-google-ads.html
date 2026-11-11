@@ -148,6 +148,14 @@ tr.locked td{filter:blur(5px)}
 .chart-bars svg{max-height:260px}
 #r-scen-note{margin-top:12px}
 #restart{margin-top:8px}
+.metier-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin:-8px 0 28px;padding:16px 20px;border:1px solid var(--line);border-radius:16px;background:var(--ground)}
+.metier-chips{display:flex;flex-wrap:wrap;gap:8px;flex:1 1 300px}
+.metier-chip{background:#fff !important;border:1px solid var(--line);font-size:14px;padding:6px 12px;border-radius:99px}
+.metier-none{color:var(--muted);font-size:14px}
+.metier-edit{background:none;border:0;padding:0;font:inherit;font-size:14px;font-weight:600;color:var(--blue);text-decoration:underline;cursor:pointer}
+.metier-form{flex-basis:100%;display:flex;flex-wrap:wrap;gap:10px}
+.metier-form input{flex:1 1 320px;min-height:46px;border:1.5px solid var(--navy);border-radius:999px;padding:0 18px;font:inherit;font-size:16px}
+.metier-form .audit-note{flex-basis:100%}
 .rank-list li.lock-line::before,.rank-list li.more-row::before{content:none}
 .rank-list li.lock-line,.rank-list li.more-row{display:flex;border-bottom:0}
 .unlock-fab{display:none}
@@ -248,8 +256,8 @@ tr.locked td{filter:blur(5px)}
 <div class="progress-box">
 <span class="eyebrow">Analyse en cours · <span id="p-site"></span></span>
 <ol class="steps">
-<li>Lecture de votre site et de ses balises de suivi</li>
-<li>Recherche des mots-clés de votre secteur</li>
+<li>Lecture de votre site : votre métier et vos balises de suivi</li>
+<li>Recherches Google liées à votre métier</li>
 <li>Volumes, coût par clic et concurrence au Québec</li>
 <li>Concurrents, régions et appareils</li>
 <li>Prévisions de budget Google Ads</li>
@@ -263,6 +271,18 @@ tr.locked td{filter:blur(5px)}
 <section id="audit-result" class="sec sec-white audit-panel" hidden>
 <div class="container">
 <div class="sec-head"><div class="stack"><span class="eyebrow">Tableau de bord · <span id="r-site"></span> · Québec, français</span><h2 class="display h2-sm" id="r-title">Votre potentiel Google Ads</h2></div></div>
+
+<div class="metier-bar">
+<span class="eyebrow">Métier analysé</span>
+<div id="r-metier" class="metier-chips"></div>
+<button type="button" class="metier-edit" id="metier-edit">Ce n'est pas votre métier ? Corrigez-le</button>
+<form id="metier-form" class="metier-form" hidden>
+<label class="sr-only" for="metier-input">Vos services, séparés par des virgules</label>
+<input id="metier-input" type="text" placeholder="ex. évaluation environnementale, décontamination des sols" maxlength="300">
+<button class="btn btn-dark btn-sm" type="submit">Relancer l'analyse</button>
+<p class="audit-note">Écrivez vos services comme vos clients les cherchent, séparés par des virgules.</p>
+</form>
+</div>
 
 <div class="dash-top">
 <div class="card card-dark score-card">
@@ -330,7 +350,7 @@ tr.locked td{filter:blur(5px)}
 <form id="lead-form" name="audit-google-ads" method="POST" data-netlify="true" netlify-honeypot="bot-field" class="unlock-form">
 <input type="hidden" name="form-name" value="audit-google-ads">
 <p hidden><label>Ne pas remplir <input name="bot-field"></label></p>
-<input type="hidden" name="site"><input type="hidden" name="score"><input type="hidden" name="recherches"><input type="hidden" name="cpc"><input type="hidden" name="concurrence"><input type="hidden" name="pret">
+<input type="hidden" name="site"><input type="hidden" name="score"><input type="hidden" name="recherches"><input type="hidden" name="cpc"><input type="hidden" name="concurrence"><input type="hidden" name="pret"><input type="hidden" name="metier">
 <label class="sr-only" for="lead-email">Votre courriel</label>
 <input id="lead-email" name="courriel" type="email" autocomplete="email" placeholder="votre@courriel.ca" required>
 <button class="btn btn-orange" type="submit">Débloquer</button>
@@ -374,6 +394,6 @@ tr.locked td{filter:blur(5px)}
 </div>
 </footer>
 <script src="/site.js" defer></script>
-<script src="/audit.js?v=5" defer></script>
+<script src="/audit.js?v=6" defer></script>
 </body>
 </html>
