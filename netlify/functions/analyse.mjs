@@ -174,15 +174,19 @@ export default async (req) => {
     "piano equipement location camion boite boites carton cartons " +
     "monteregie laurentides lanaudiere estrie mauricie outaouais abitibi gaspesie saguenay beauce charlevoix " +
     "saint sainte paris france belgique suisse canada quebec montreal").split(" "));
-  const freq = new Map();
   for (const k of all) {
-    for (const w of new Set(norm(k.keyword).split(/[^a-z0-9]+/))) if (w) freq.set(w, (freq.get(w) || 0) + 1);
     for (const g of k.generic) for (const w of norm(g).split(/[^a-z0-9]+/)) if (w) GENERIC.add(w);
   }
-  [...freq.entries()].sort((a, b) => b[1] - a[1]).slice(0, 40).forEach(([w]) => GENERIC.add(w));
+  // Un mot qui revient dans au moins 2 recherches sans marque est un mot du secteur, pas un nom.
+  const nonBrandFreq = new Map();
+  for (const k of all) {
+    if (k.brands.length) continue;
+    for (const w of new Set(norm(k.keyword).split(/[^a-z0-9]+/))) if (w) nonBrandFreq.set(w, (nonBrandFreq.get(w) || 0) + 1);
+  }
+  for (const [w, n] of nonBrandFreq) if (n >= 2) GENERIC.add(w);
   const isRealBrand = (name) =>
     norm(name).split(/[^a-z0-9]+/).some((w) => w.length >= 3 && !/^\d+$/.test(w) && !GENERIC.has(w));
-  const titleCase = (s) => s.replace(/(^|[\s'’-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
+  const titleCase = (s) => /^\S{2,3}$/.test(s) ? s.toUpperCase() : s.replace(/(^|[\s'’-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
 
   const compMap = new Map();
   for (const k of all) {
@@ -196,6 +200,7 @@ export default async (req) => {
     }
   }
   const concurrents = [...compMap.values()]
+    .filter((c) => c.recherches >= 30)
     .sort((a, b) => b.recherches - a.recherches)
     .slice(0, 8)
     .map(({ nom, recherches, motCle }) => ({ nom: titleCase(nom), recherches, motCle }));
