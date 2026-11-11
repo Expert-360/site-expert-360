@@ -72,6 +72,8 @@
       sc.textContent = n;
       if (n >= target) clearInterval(timer);
     }, 30);
+    renderPhares(a);
+    renderCompetitors(a.concurrents || [], data.rapport.concurrents || []);
     var lf = $('lead-form');
     lf.site.value = data.site; lf.score.value = a.score; lf.recherches.value = a.recherchesMois;
     lf.cpc.value = a.cpcMoyen; lf.concurrence.value = a.concurrence;
@@ -94,6 +96,54 @@
 
   function cell(text) { var td = document.createElement('td'); td.textContent = text; return td; }
 
+  function badgeCell(level) {
+    var td = document.createElement('td'), b = document.createElement('span');
+    var cls = { 'Faible': 'b-faible', 'Moyenne': 'b-moyenne', 'Élevée': 'b-elevee' }[level] || '';
+    b.className = 'badge ' + cls; b.textContent = level; td.appendChild(b); return td;
+  }
+
+  function cpcText(k) { return k.cpcBas !== null ? money(k.cpcBas) + ' – ' + money(k.cpcHaut) : '—'; }
+
+  function kwRow(k) {
+    var tr = document.createElement('tr');
+    tr.appendChild(cell(k.mot));
+    tr.appendChild(cell(nf.format(k.volume)));
+    tr.appendChild(cell(cpcText(k)));
+    tr.appendChild(badgeCell(k.concurrence));
+    return tr;
+  }
+
+  function renderPhares(a) {
+    var tb = $('r-phares'); tb.innerHTML = '';
+    (a.motsClesPhares || []).forEach(function (k) { tb.appendChild(kwRow(k)); });
+    var top = (a.motsClesPhares || []).filter(function (k) { return k.cpcBas !== null; })[0];
+    $('r-hook').textContent = top
+      ? '« ' + top.mot + ' » : ' + nf.format(top.volume) + ' recherches par mois, et un clic vaut ' + cpcText(top) + '.'
+      : nf.format(a.recherchesMois) + ' recherches par mois sur vos services au Québec.';
+  }
+
+  function renderCompetitors(list, full) {
+    var ol = $('r-comp-list'); ol.innerHTML = '';
+    if (!list.length) {
+      $('r-comp-title').textContent = 'Aucun concurrent ne domine';
+      $('r-comp-note').textContent = "Personne n'a encore imposé son nom dans vos recherches au Québec. Le terrain est libre : le premier à investir prend la place.";
+    } else {
+      $('r-comp-title').textContent = list.length + ' concurrent' + (list.length > 1 ? 's' : '') + ' déjà cherché' + (list.length > 1 ? 's' : '') + ' par leur nom';
+      var max = list[0].recherches || 1;
+      list.forEach(function (c) {
+        var li = document.createElement('li'), b = document.createElement('b'), sm = document.createElement('small'), bar = document.createElement('i');
+        b.textContent = c.nom; sm.textContent = nf.format(c.recherches) + '/mois';
+        bar.style.width = Math.max(6, Math.round((c.recherches / max) * 100)) + '%';
+        li.appendChild(b); li.appendChild(sm); li.appendChild(bar); ol.appendChild(li);
+      });
+      $('r-comp-note').textContent = 'Recherches mensuelles sur leur nom au Québec. Avec Google Ads, votre annonce peut apparaître quand vos clients les comparent.';
+    }
+    var fc = $('r-comp-full'); fc.innerHTML = '';
+    if (full.length) {
+      full.forEach(function (c) { var s = document.createElement('span'); s.className = 'chip'; s.textContent = c.nom + ' · ' + nf.format(c.recherches) + '/mois'; fc.appendChild(s); });
+    } else { $('comp-full-card').hidden = true; }
+  }
+
   function renderReport() {
     var r = data.rapport;
     $('gate').hidden = true;
@@ -114,14 +164,7 @@
     $('r-budget-note').textContent = 'Pour environ ' + nf.format(r.clicsEstimes) + ' clics par mois au coût moyen de votre secteur. À ajuster selon vos objectifs et vos marges.';
     $('r-brand').textContent = r.recherchesMarque > 0 ? ('Votre nom est déjà cherché environ ' + nf.format(r.recherchesMarque) + ' fois par mois.') : "Votre nom d'entreprise est encore peu cherché sur Google : la pub peut accélérer votre notoriété.";
     var tb = $('r-kw'); tb.innerHTML = '';
-    r.motsCles.forEach(function (k) {
-      var tr = document.createElement('tr');
-      tr.appendChild(cell(k.mot));
-      tr.appendChild(cell(nf.format(k.volume)));
-      tr.appendChild(cell(k.cpcBas !== null ? money(k.cpcBas) + ' – ' + money(k.cpcHaut) : '—'));
-      tr.appendChild(cell(k.concurrence));
-      tb.appendChild(tr);
-    });
+    r.motsCles.forEach(function (k) { tb.appendChild(kwRow(k)); });
     var o = $('r-opp'); o.innerHTML = '';
     if (r.opportunites.length) {
       r.opportunites.forEach(function (k) { var c = document.createElement('span'); c.className = 'chip'; c.textContent = k.mot + ' · ' + nf.format(k.volume) + '/mois'; o.appendChild(c); });

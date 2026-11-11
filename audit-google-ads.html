@@ -56,6 +56,18 @@
 .kpi-card{gap:6px !important;padding:22px 28px !important}
 .kpi-card b{font-size:clamp(30px,3vw,42px);font-weight:800;font-stretch:115%;letter-spacing:-.02em}
 .kpi-card p{font-size:14px !important}
+.preview-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:24px;margin-top:24px}
+.preview-grid h3{font-size:clamp(19px,1.6vw,23px)}
+.comp-list{list-style:none;margin:0;padding:0;display:grid;gap:12px;counter-reset:c}
+.comp-list li{display:grid;grid-template-columns:28px 1fr auto;gap:4px 10px;align-items:center;counter-increment:c}
+.comp-list li::before{content:counter(c);font-family:var(--mono);font-size:13px;color:var(--muted-dark)}
+.comp-list b{font-size:17px}
+.comp-list small{font-family:var(--mono);font-size:12px;color:var(--muted-dark-2);text-align:right}
+.comp-list i{grid-column:2/4;display:block;height:6px;border-radius:9px;background:var(--orange)}
+.comp-card p{font-size:14px !important}
+.badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:13px;font-weight:600}
+.b-faible{background:#DDF3E4;color:#1D6B3A}.b-moyenne{background:var(--t-yellow);color:#7A5300}.b-elevee{background:var(--t-orange);color:var(--orange-dark)}
+@media (max-width:980px){.preview-grid{grid-template-columns:1fr}}
 .gate{position:relative;margin-top:28px}
 .gate-preview{display:grid;gap:12px;filter:blur(3px);opacity:.55}
 .fake-row{height:54px;border-radius:14px;background:linear-gradient(90deg,var(--chip) 0 45%,transparent 45% 48%,var(--chip) 48% 68%,transparent 68% 71%,var(--chip) 71%)}
@@ -159,6 +171,12 @@
 </div>
 </div>
 
+<div class="preview-grid">
+<div class="card"><span class="eyebrow">Les recherches phares de votre secteur</span><h3 id="r-hook"></h3>
+<div class="table-wrap"><table class="kw-table"><thead><tr><th>Ce que vos clients tapent</th><th>Recherches/mois</th><th>Coût par clic</th><th>Concurrence</th></tr></thead><tbody id="r-phares"></tbody></table></div></div>
+<div class="card card-dark comp-card"><span class="eyebrow">Vos concurrents sur Google</span><h3 id="r-comp-title">Ils sont déjà cherchés par leur nom</h3><ol id="r-comp-list" class="comp-list"></ol><p id="r-comp-note"></p></div>
+</div>
+
 <div id="gate" class="gate">
 <div class="gate-preview" aria-hidden="true">
 <div class="fake-row"></div><div class="fake-row"></div><div class="fake-row"></div><div class="fake-row"></div>
@@ -166,7 +184,7 @@
 <div class="gate-box card">
 <span class="eyebrow">Rapport complet gratuit</span>
 <h3>Recevez l'analyse détaillée de votre secteur</h3>
-<ul class="gate-list"><li>Vos 15 meilleurs mots-clés, avec volume et coût par clic</li><li>Les opportunités peu concurrencées</li><li>La saisonnalité : vos mois forts et faibles</li><li>Un budget de départ indicatif</li></ul>
+<ul class="gate-list"><li>Vos 15 meilleurs mots-clés, avec volume et coût par clic</li><li>Les opportunités peu concurrencées à saisir en premier</li><li>La saisonnalité : vos mois forts et faibles</li><li>Un budget de départ indicatif pour votre secteur</li></ul>
 <form id="lead-form" name="audit-google-ads" method="POST" data-netlify="true" netlify-honeypot="bot-field" class="lead-form">
 <input type="hidden" name="form-name" value="audit-google-ads">
 <p hidden><label>Ne pas remplir <input name="bot-field"></label></p>
@@ -189,6 +207,7 @@
 <div class="card table-card"><span class="eyebrow">Vos 15 principaux mots-clés</span>
 <div class="table-wrap"><table class="kw-table"><thead><tr><th>Mot-clé</th><th>Recherches/mois</th><th>Coût par clic</th><th>Concurrence</th></tr></thead><tbody id="r-kw"></tbody></table></div>
 </div>
+<div class="card" id="comp-full-card"><span class="eyebrow">Tous les concurrents repérés</span><div id="r-comp-full" class="chips opp-chips"></div><p>Ces noms sont cherchés sur Google au Québec. Une campagne bien construite vous place à côté d'eux, au moment où le client compare.</p></div>
 <div class="card" id="opp-card"><span class="eyebrow">Opportunités : volume correct, concurrence faible</span><div id="r-opp" class="chips opp-chips"></div></div>
 <div class="card card-dark cta-card">
 <div><h3>Transformer ce potentiel en demandes ?</h3><p>On regarde ensemble votre compte et votre site, et on vous dit honnêtement ce qui rapporterait le plus. 30 minutes, sans engagement.</p></div>
