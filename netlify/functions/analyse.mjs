@@ -141,6 +141,22 @@ export default async (req) => {
     const token = await getAccessToken();
     raw = await keywordIdeas(token, { siteSeed: { site: site.host } });
     if (raw.length < 10) raw = await keywordIdeas(token, { urlSeed: { url: site.url } });
+    // 2e passe : élargir à partir des 3 recherches principales du secteur (sans marque),
+    // pour faire ressortir davantage de concurrents. En cas d'échec, on garde la 1re passe.
+    const seeds = raw
+      .filter((r) => !((r.keywordAnnotations || {}).concepts || []).some((c) => /BRAND/.test(c.conceptGroup?.type || "") && c.conceptGroup.type !== "NON_BRAND"))
+      .sort((a, b) => Number(b.keywordIdeaMetrics?.avgMonthlySearches || 0) - Number(a.keywordIdeaMetrics?.avgMonthlySearches || 0))
+      .slice(0, 3)
+      .map((r) => r.text);
+    if (seeds.length) {
+      try {
+        const more = await keywordIdeas(token, { keywordSeed: { keywords: seeds } });
+        const known = new Set(raw.map((r) => r.text));
+        raw = raw.concat(more.filter((r) => !known.has(r.text)));
+      } catch (e) {
+        console.error("analyse:seed2", site.host, String(e.message || e));
+      }
+    }
   } catch (e) {
     console.error("analyse", site.host, String(e.message || e));
     return json({ error: "L'analyse est momentanément indisponible. Réessayez dans quelques minutes." }, 502);
@@ -208,7 +224,9 @@ export default async (req) => {
   const brand = all.filter(isBrand);
   // Le marché exclut votre marque et les recherches sur le nom d'un concurrent.
   const isCompetitorSearch = (k) => k.brands.some((n) => !isOwnName(n) && isRealBrand(n));
-  const market = all.filter((k) => !isBrand(k) && !isCompetitorSearch(k)).sort((a, b) => b.volume - a.volume);
+  // Recherches de produits (ex. « boîte de déménagement ») : forte concurrence mais clic bon marché = commerce en ligne.
+  const isProduct = (k) => k.compIndex !== null && k.compIndex >= 67 && k.high !== null && k.high < 3.5;
+  const market = all.filter((k) => !isBrand(k) && !isCompetitorSearch(k) && !isProduct(k)).sort((a, b) => b.volume - a.volume);
   const top = market.slice(0, 50);
 
   const totalVolume = top.reduce((s, k) => s + k.volume, 0);
