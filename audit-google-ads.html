@@ -133,6 +133,76 @@ tr.locked td{filter:blur(5px)}
 .unlock.done{display:none}
 @media (max-width:980px){.insight-grid{grid-template-columns:1fr}.unlock{position:static}}
 
+.dash-top{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:24px}
+.kpi-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.kpi-accent{background:var(--t-orange) !important;border-color:transparent !important}
+.dash-head{display:grid;gap:6px;margin:56px 0 20px}
+.dash-h{font-size:clamp(22px,2.2vw,30px);font-weight:800;font-stretch:110%;letter-spacing:-.01em}
+.dash-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+.dash-wide{grid-column:1/-1}
+.chart-card{gap:10px !important}
+.chart-card h4,.site-card h4{font-size:18px;font-weight:700;margin:0}
+.chart-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.chart-note{font-size:14px !important;max-width:420px}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart-bars svg{max-height:260px}
+#r-scen-note{margin-top:12px}
+#restart{margin-top:8px}
+.rank-list li.lock-line::before,.rank-list li.more-row::before{content:none}
+.rank-list li.lock-line,.rank-list li.more-row{display:flex;border-bottom:0}
+.unlock-fab{display:none}
+@media (max-width:980px){.unlock-fab:not([hidden]){display:inline-flex;position:fixed;left:16px;right:16px;bottom:14px;z-index:20;justify-content:center;box-shadow:0 12px 30px rgba(14,42,59,.35)}}
+.insight-grid{align-items:start}
+.chart text{font-family:var(--mono);font-size:11px;fill:var(--muted)}
+.chart .v{font-size:11px;fill:var(--navy);font-weight:500}
+.donut-wrap{display:grid;grid-template-columns:150px minmax(0,1fr);gap:20px;align-items:center}
+.donut-wrap svg{width:150px;height:150px}
+.donut-wrap .center{font-family:var(--sans);font-size:22px;font-weight:800;fill:var(--navy)}
+.donut-wrap .center-sub{font-size:9.5px}
+.legend{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.legend li{display:grid;grid-template-columns:12px minmax(0,1fr) auto;gap:10px;align-items:center;font-size:15px}
+.legend i{width:12px;height:12px;border-radius:3px}
+.legend b{font-family:var(--mono);font-size:13px;font-weight:500}
+.hbars{display:grid;gap:12px}
+.hbar{display:grid;grid-template-columns:110px minmax(0,1fr) 44px;gap:10px;align-items:center;font-size:14px}
+.hbar em{font-style:normal}
+.hbar .track{height:14px;border-radius:7px;background:var(--chip);overflow:hidden}
+.hbar .track i{display:block;height:100%;border-radius:7px;background:var(--blue)}
+.hbar b{font-family:var(--mono);font-size:13px;font-weight:500;text-align:right}
+.chart-empty{color:var(--muted);font-size:15px}
+.site-card{display:grid !important;grid-template-columns:minmax(0,280px) minmax(0,1fr);gap:28px !important;align-items:start}
+.site-score{display:grid;gap:14px;justify-items:start}
+.mini-gauge{position:relative;width:130px;height:130px}
+.mini-gauge svg{width:100%;height:100%}
+.mini-gauge b{position:absolute;inset:0;display:grid;place-items:center;font-size:36px;font-weight:800;font-stretch:120%}
+.site-score-label{font-size:19px}
+.site-score p{font-size:14px !important;margin-top:4px}
+.check-list{list-style:none;margin:0;padding:0;display:grid;gap:0}
+.check-list li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:4px 12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.check-list li:last-child{border-bottom:0}
+.check-list .dot{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:800;grid-row:span 2}
+.dot.ok{background:#DDF3E4;color:#1D6B3A}.dot.warn{background:var(--t-yellow);color:#7A5300}.dot.bad{background:#FBE0DD;color:#B3261E}
+.check-list b{font-size:16px}
+.check-list small{font-size:14px;color:var(--muted);line-height:1.45}
+.scen-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.scen{gap:10px !important}
+.scen .amount{font-size:clamp(28px,2.6vw,38px);font-weight:800;font-stretch:115%;letter-spacing:-.02em}
+.scen dl{display:grid;grid-template-columns:1fr auto;gap:8px 12px;margin:6px 0 0;font-size:15px}
+.scen dt{color:var(--muted)}
+.scen dd{margin:0;font-family:var(--mono);font-weight:500;text-align:right}
+.scen.card-dark dt{color:var(--muted-dark)}
+.scen-tag{justify-self:start;font-family:var(--mono);font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;padding:4px 10px;border-radius:99px;background:var(--chip)}
+.card-dark .scen-tag{background:var(--orange);color:var(--navy)}
+.scen-locked{position:relative}
+.scen-locked>.inner{filter:blur(6px);user-select:none;pointer-events:none}
+.scen-locked>.lock-tag{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);white-space:nowrap}
+.rank-2col{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:32px}
+.rank-2col .lock-line,.rank-2col .more-row{grid-column:1/-1}
+.check-list .lock-line{display:flex;grid-template-columns:none;border-bottom:0}
+@media (max-width:980px){.dash-top,.site-card{grid-template-columns:1fr}.dash-grid{grid-template-columns:1fr}.scen-grid{grid-template-columns:1fr}.rank-2col{grid-template-columns:1fr}}
+@media (max-width:600px){.kpi-grid{grid-template-columns:1fr 1fr;gap:12px}.kpi-card{padding:16px 18px !important}.kpi-card b{font-size:26px}.kpi-card p{font-size:12.5px !important}.donut-wrap{grid-template-columns:1fr;justify-items:center}.legend{width:100%}.hbar{grid-template-columns:88px minmax(0,1fr) 40px;font-size:13px}}
+.scen .inner{display:grid;gap:10px}
+.check-msg{display:block !important;color:var(--muted)}
 </style>
 <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebApplication","@id":"https://expert-360.ca/audit-google-ads#app","name":"Audit Google Ads gratuit","url":"https://expert-360.ca/audit-google-ads","applicationCategory":"BusinessApplication","operatingSystem":"Web","inLanguage":"fr-CA","description":"Entrez votre site et découvrez en quelques secondes le potentiel Google Ads de votre secteur au Québec : recherches par mois, coût par clic, concurrence et saisonnalité.","offers":{"@type":"Offer","price":"0","priceCurrency":"CAD"},"provider":{"@id":"https://expert-360.ca/#org"}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Accueil","item":"https://expert-360.ca/"},{"@type":"ListItem","position":2,"name":"Acquisition PPC","item":"https://expert-360.ca/acquisition-ppc"},{"@type":"ListItem","position":3,"name":"Audit Google Ads gratuit","item":"https://expert-360.ca/audit-google-ads"}]}]}</script>
 </head>
@@ -161,7 +231,7 @@ tr.locked td{filter:blur(5px)}
 <div class="audit-intro">
 <div class="crumbs"><a href="/acquisition-ppc">Acquisition PPC</a><span aria-hidden="true">/</span><span>Audit Google Ads gratuit</span></div>
 <h1 class="display h1-sm">Votre secteur a-t-il du potentiel <span class="accent">sur Google&nbsp;Ads&nbsp;?</span></h1>
-<p class="lead">Entrez l'adresse de votre site. On analyse les recherches Google de votre secteur au Québec : volumes, coût par clic, concurrence et saisonnalité.</p>
+<p class="lead">Entrez l'adresse de votre site. Vous obtenez en quelques secondes un tableau de bord complet : le marché de votre secteur au Québec, vos concurrents, la préparation de votre site et ce que votre budget vous rapporterait.</p>
 <form id="audit-form" class="audit-form" novalidate>
 <label class="sr-only" for="audit-url">Adresse de votre site web</label>
 <input id="audit-url" name="url" type="text" inputmode="url" autocomplete="url" placeholder="votresite.ca" required>
@@ -178,11 +248,12 @@ tr.locked td{filter:blur(5px)}
 <div class="progress-box">
 <span class="eyebrow">Analyse en cours · <span id="p-site"></span></span>
 <ol class="steps">
-<li>Lecture de votre site</li>
+<li>Lecture de votre site et de ses balises de suivi</li>
 <li>Recherche des mots-clés de votre secteur</li>
-<li>Volumes de recherche au Québec</li>
-<li>Coût par clic et concurrence</li>
-<li>Calcul de votre score de potentiel</li>
+<li>Volumes, coût par clic et concurrence au Québec</li>
+<li>Concurrents, régions et appareils</li>
+<li>Prévisions de budget Google Ads</li>
+<li>Montage de votre tableau de bord</li>
 </ol>
 <div class="pbar"><i id="pbar-fill"></i></div>
 </div>
@@ -191,20 +262,45 @@ tr.locked td{filter:blur(5px)}
 
 <section id="audit-result" class="sec sec-white audit-panel" hidden>
 <div class="container">
-<div class="sec-head"><div class="stack"><span class="eyebrow">Résultat · <span id="r-site"></span></span><h2 class="display h2-sm" id="r-title">Votre potentiel Google Ads</h2></div></div>
-<div class="result-grid">
+<div class="sec-head"><div class="stack"><span class="eyebrow">Tableau de bord · <span id="r-site"></span> · Québec, français</span><h2 class="display h2-sm" id="r-title">Votre potentiel Google Ads</h2></div></div>
+
+<div class="dash-top">
 <div class="card card-dark score-card">
 <span class="eyebrow">Score de potentiel</span>
 <div class="gauge"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="52" fill="none" stroke="#24475C" stroke-width="12"/><circle id="g-arc" cx="60" cy="60" r="52" fill="none" stroke="#FA7119" stroke-width="12" stroke-linecap="round" stroke-dasharray="327" stroke-dashoffset="327" transform="rotate(-90 60 60)"/></svg><b id="r-score">0</b><span>/100</span></div>
 <p class="score-label" id="r-label"></p>
 </div>
-<div class="kpi-col">
-<div class="card kpi-card"><span class="eyebrow">Volume de recherche global</span><b id="r-vol">–</b><p>recherches par mois au Québec sur les mots-clés de votre secteur</p></div>
+<div class="kpi-grid">
+<div class="card kpi-card"><span class="eyebrow">Recherches par mois</span><b id="r-vol">–</b><p>sur les mots-clés de votre secteur au Québec</p></div>
 <div class="card kpi-card"><span class="eyebrow">Coût moyen d'un clic</span><b id="r-cpc">–</b><p>en haut de page, pondéré par le volume</p></div>
-<div class="card kpi-card"><span class="eyebrow">Concurrence</span><b id="r-comp">–</b><p>nombre d'annonceurs qui se battent pour ces recherches</p></div>
+<div class="card kpi-card"><span class="eyebrow">Concurrence</span><b id="r-comp">–</b><p id="r-comp-sub">annonceurs sur ces recherches</p></div>
+<div class="card kpi-card kpi-accent"><span class="eyebrow">Clics possibles par mois</span><b id="r-clics">–</b><p id="r-clics-sub">avec le budget conseillé</p></div>
 </div>
 </div>
 
+<div class="dash-head"><span class="eyebrow">01 · Le marché</span><h3 class="dash-h">Ce que vos clients cherchent, et quand</h3></div>
+<div class="dash-grid">
+<div class="card chart-card dash-wide">
+<div class="chart-head"><div><span class="eyebrow">Saisonnalité</span><h4>Recherches par mois sur 12 mois</h4></div><p class="chart-note" id="r-season-note"></p></div>
+<div id="c-season" class="chart chart-bars" role="img"></div>
+</div>
+<div class="card chart-card"><span class="eyebrow">Intention de recherche</span><h4>Pourquoi ils cherchent</h4><div id="c-intent" class="chart chart-donut"></div></div>
+<div class="card chart-card" id="card-devices"><span class="eyebrow">Appareils</span><h4>D'où ils cherchent</h4><div id="c-devices" class="chart chart-donut"></div></div>
+<div class="card chart-card"><span class="eyebrow">Coût par clic</span><h4>Part des recherches par tranche de prix</h4><div id="c-cpc" class="chart"></div></div>
+<div class="card chart-card"><span class="eyebrow">Concurrence</span><h4>Part des recherches par niveau</h4><div id="c-comp" class="chart chart-donut"></div></div>
+</div>
+
+<div class="dash-head"><span class="eyebrow">02 · Votre site</span><h3 class="dash-h">Votre site est-il prêt pour la publicité ?</h3></div>
+<div class="card site-card" id="site-card">
+<div class="site-score"><div class="mini-gauge"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="52" fill="none" stroke="#EAF1F5" stroke-width="14"/><circle id="s-arc" cx="60" cy="60" r="52" fill="none" stroke="#2D82AB" stroke-width="14" stroke-linecap="round" stroke-dasharray="327" stroke-dashoffset="327" transform="rotate(-90 60 60)"/></svg><b id="s-score">–</b></div><div><b class="site-score-label" id="s-label">Préparation publicitaire</b><p id="s-sub"></p></div></div>
+<ul id="r-checks" class="check-list"></ul>
+</div>
+
+<div class="dash-head"><span class="eyebrow">03 · Budget</span><h3 class="dash-h">Ce que votre budget vous rapporterait</h3></div>
+<div id="r-scen" class="scen-grid"></div>
+<p class="audit-note" id="r-scen-note"></p>
+
+<div class="dash-head"><span class="eyebrow">04 · Le détail</span><h3 class="dash-h">Mots-clés, concurrents, régions, opportunités</h3></div>
 <div class="insight-grid">
 <div class="card insight insight-wide">
 <span class="eyebrow">Mots-clés principaux</span>
@@ -222,25 +318,19 @@ tr.locked td{filter:blur(5px)}
 <h3>Où vos clients cherchent</h3>
 <ol id="r-reg" class="rank-list"></ol>
 </div>
-<div class="card insight">
+<div class="card insight insight-wide">
 <span class="eyebrow">Opportunités</span>
 <h3>Recherches peu disputées à saisir</h3>
-<ol id="r-opp" class="rank-list"></ol>
-</div>
-<div class="card insight">
-<span class="eyebrow">Saisonnalité</span>
-<h3>Vos mois forts et faibles</h3>
-<div class="locked-wrap"><div id="r-season" class="season" role="img" aria-label="Saisonnalité disponible dans le rapport complet"></div><div class="lock-tag lock-season">Rapport complet</div></div>
-<p id="r-season-note" class="insight-note"></p>
+<ol id="r-opp" class="rank-list rank-2col"></ol>
 </div>
 </div>
 
 <div class="card card-dark unlock" id="unlock">
-<div class="unlock-text"><h3>Débloquez le rapport complet</h3><p>Tous les mots-clés, tous les concurrents, toutes les régions et opportunités, la saisonnalité et un budget de départ pour votre secteur.</p></div>
+<div class="unlock-text"><h3>Débloquez le rapport complet</h3><p>Tous les mots-clés, concurrents, régions et opportunités, les 13 vérifications de votre site et les 3 scénarios de budget.</p></div>
 <form id="lead-form" name="audit-google-ads" method="POST" data-netlify="true" netlify-honeypot="bot-field" class="unlock-form">
 <input type="hidden" name="form-name" value="audit-google-ads">
 <p hidden><label>Ne pas remplir <input name="bot-field"></label></p>
-<input type="hidden" name="site"><input type="hidden" name="score"><input type="hidden" name="recherches"><input type="hidden" name="cpc"><input type="hidden" name="concurrence">
+<input type="hidden" name="site"><input type="hidden" name="score"><input type="hidden" name="recherches"><input type="hidden" name="cpc"><input type="hidden" name="concurrence"><input type="hidden" name="pret">
 <label class="sr-only" for="lead-email">Votre courriel</label>
 <input id="lead-email" name="courriel" type="email" autocomplete="email" placeholder="votre@courriel.ca" required>
 <button class="btn btn-orange" type="submit">Débloquer</button>
@@ -250,15 +340,13 @@ tr.locked td{filter:blur(5px)}
 </div>
 
 <div id="report" class="report" hidden>
-<div class="grid-2 report-top">
-<div class="card card-muted"><span class="eyebrow">Budget de départ indicatif</span><h3><span id="r-budget"></span> / mois</h3><p id="r-budget-note"></p><p id="r-brand"></p></div>
 <div class="card card-dark cta-card">
-<div><h3>Transformer ce potentiel en demandes ?</h3><p>On regarde ensemble votre compte et votre site, et on vous dit honnêtement ce qui rapporterait le plus. 30 minutes, sans engagement.</p></div>
+<div><h3>Transformer ce potentiel en demandes ?</h3><p id="r-brand"></p><p>On regarde ensemble votre compte Google Ads et votre site, et on vous dit honnêtement ce qui rapporterait le plus. 30 minutes, sans engagement.</p></div>
 <a class="btn btn-orange" href="https://calendly.com/lamri-l8ih/30min" target="_blank" rel="noopener">Réserver un appel <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a>
 </div>
 </div>
-</div>
-<p class="audit-note">Source : Google Ads Keyword Planner, moyenne des 12 derniers mois, Québec, recherches en français. Les concurrents sont les marques que Google repère dans les recherches de votre secteur. Les volumes sont des estimations de Google.</p>
+<p class="audit-note">Sources : Google Ads Keyword Planner (moyenne des 12 derniers mois, Québec, recherches en français) et prévisions Google Ads pour les scénarios de budget. Les concurrents sont les marques que Google repère dans les recherches de votre secteur. L'analyse du site porte sur sa page d'accueil. Les chiffres sont des estimations.</p>
+<button class="btn btn-orange unlock-fab" type="button" id="unlock-fab" hidden>🔒 Débloquer le rapport complet</button>
 <button class="btn btn-outline btn-sm" type="button" id="restart">Analyser un autre site</button>
 </div>
 </section>
@@ -286,6 +374,6 @@ tr.locked td{filter:blur(5px)}
 </div>
 </footer>
 <script src="/site.js" defer></script>
-<script src="/audit.js?v=4" defer></script>
+<script src="/audit.js?v=5" defer></script>
 </body>
 </html>

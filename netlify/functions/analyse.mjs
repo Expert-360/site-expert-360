@@ -173,6 +173,76 @@ async function volumesParVille(token, keywords) {
     .sort((a, b) => b.recherches - a.recherches);
 }
 
+
+// Part mobile / ordinateur / tablette sur les recherches principales du secteur.
+async function appareils(token, keywords) {
+  const cid = process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID;
+  const r = await fetch(`${API}/customers/${cid}:generateKeywordHistoricalMetrics`, {
+    method: "POST",
+    headers: adsHeaders(token),
+    body: JSON.stringify({
+      keywords, language: LANG_FR, geoTargetConstants: [GEO_QUEBEC], keywordPlanNetwork: "GOOGLE_SEARCH",
+      aggregateMetrics: { aggregateMetricTypes: ["DEVICE"] },
+    }),
+  });
+  if (!r.ok) throw new Error("device:" + r.status);
+  const list = ((await r.json()).aggregateMetricResults || {}).deviceSearches || [];
+  const NOMS = { MOBILE: "Mobile", DESKTOP: "Ordinateur", TABLET: "Tablette" };
+  const total = list.reduce((t, d) => t + Number(d.searchCount || 0), 0);
+  if (!total) return [];
+  return list.filter((d) => NOMS[d.device])
+    .map((d) => ({ appareil: NOMS[d.device], part: Math.round((Number(d.searchCount || 0) / total) * 100) }))
+    .sort((a, b) => b.part - a.part);
+}
+
+// Prévision Google (Keyword Planner) : clics et impressions pour un budget mensuel donné,
+// en stratégie « Maximiser les clics », sur les 30 prochains jours.
+async function prevision(token, keywords, budgetMois) {
+  const cid = process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID;
+  const d = (n) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
+  const r = await fetch(`${API}/customers/${cid}:generateKeywordForecastMetrics`, {
+    method: "POST",
+    headers: adsHeaders(token),
+    body: JSON.stringify({
+      currencyCode: "CAD",
+      forecastPeriod: { startDate: d(1), endDate: d(30) },
+      campaign: {
+        languageConstants: [LANG_FR],
+        geoModifiers: [{ geoTargetConstant: GEO_QUEBEC }],
+        keywordPlanNetwork: "GOOGLE_SEARCH",
+        biddingStrategy: { maximizeClicksBiddingStrategy: { dailyTargetSpendMicros: String(Math.round((budgetMois / 30) * 1e6)) } },
+        adGroups: [{ biddedKeywords: keywords.map((text) => ({ keyword: { text, matchType: "PHRASE" } })) }],
+      },
+    }),
+  });
+  if (!r.ok) throw new Error("forecast:" + r.status + ":" + (await r.text()).slice(0, 200));
+  const m = (await r.json()).campaignForecastMetrics || {};
+  const clics = Math.round(Number(m.clicks || 0));
+  if (!clics) throw new Error("forecast:vide");
+  return {
+    budget: budgetMois,
+    clics,
+    impressions: Math.round(Number(m.impressions || 0)),
+    cout: Math.round(Number(m.costMicros || 0) / 1e6),
+    cpc: m.averageCpcMicros ? round(Number(m.averageCpcMicros) / 1e6) : round(Number(m.costMicros || 0) / 1e6 / clics),
+    source: "google",
+  };
+}
+
+// Intention derrière chaque recherche (classement par expressions courantes).
+const INTENTIONS = [
+  ["Prix et soumission", /\b(prix|cout|couts|tarif|tarifs|soumission|soumissions|devis|combien|pas cher|abordable|estimation)\b/],
+  ["Urgence", /\b(urgence|urgent|24h|24 h|24\/7|rapide|aujourd hui|soir|weekend|fin de semaine)\b/],
+  ["Comparaison et avis", /\b(meilleur|meilleure|meilleurs|avis|top|comparatif|comparaison|vs|recommande)\b/],
+  ["Information", /\b(comment|pourquoi|quoi|quand|qu est ce|guide|conseil|conseils|definition|c est quoi|exemple)\b/],
+  ["Recherche locale", /\b(pres de moi|proche|montreal|laval|quebec|gatineau|longueuil|sherbrooke|trois rivieres|saguenay|levis|terrebonne|rive sud|rive nord|region|ville)\b/],
+];
+function intention(kw) {
+  const t = " " + norm(kw).replace(/[^a-z0-9/]+/g, " ") + " ";
+  for (const [nom, re] of INTENTIONS) if (re.test(t)) return nom;
+  return "Recherche du service";
+}
+
 const compLabel = (i) => (i === null ? "Inconnue" : i < 34 ? "Faible" : i < 67 ? "Moyenne" : "Élevée");
 const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
 const round = (x, d = 2) => Math.round(x * 10 ** d) / 10 ** d;
@@ -315,12 +385,44 @@ export default async (req) => {
     .slice(0, 8)
     .map(fmtK);
 
-  let regions = [];
-  try {
-    regions = await volumesParVille(token, top.slice(0, 20).map((k) => k.keyword));
-  } catch (e) {
-    console.error("analyse:regions", site.host, String(e.message || e));
-  }
+  // Répartitions pour les graphes
+  const share = (groups) => {
+    const tot = groups.reduce((t, g) => t + g.recherches, 0) || 1;
+    return groups.filter((g) => g.recherches > 0).map((g) => ({ ...g, part: Math.round((g.recherches / tot) * 100) }));
+  };
+  const intentMap = new Map();
+  for (const k of top) { const n = intention(k.keyword); intentMap.set(n, (intentMap.get(n) || 0) + k.volume); }
+  const intentions = share([...intentMap].map(([nom, recherches]) => ({ nom, recherches })).sort((a, b) => b.recherches - a.recherches));
+  const compMix = share(["Faible", "Moyenne", "Élevée"].map((nom) => ({
+    nom, recherches: top.filter((k) => compLabel(k.compIndex) === nom).reduce((t, k) => t + k.volume, 0),
+  })));
+  const TRANCHES = [["Moins de 1 $", 0, 1], ["1 à 3 $", 1, 3], ["3 à 6 $", 3, 6], ["6 à 10 $", 6, 10], ["10 $ et plus", 10, 1e9]];
+  const cpcMix = share(TRANCHES.map(([nom, a, b]) => ({
+    nom, recherches: withBids.filter((k) => { const m = (k.low + k.high) / 2; return m >= a && m < b; }).reduce((t, k) => t + k.volume, 0),
+  })));
+
+  // Scénarios de budget à l'échelle d'une PME : petit marché 300 / 750 / 1 500 $, sinon 750 / 1 500 / 3 000 $.
+  const budgets = budget < 1500 ? [300, 750, 1500] : [750, 1500, 3000];
+  const estimer = (b) => {
+    const cl = Math.min(Math.round(b / Math.max(cpc, 0.3)), Math.round(totalVolume * 0.12));
+    return { budget: b, clics: cl, impressions: Math.round(cl / 0.05), cout: Math.min(b, Math.round(cl * cpc)), cpc: round(cpc), source: "estimation" };
+  };
+  const kwPrev = top.filter((k) => k.low !== null).slice(0, 20).map((k) => k.keyword);
+
+  const [regRes, devRes, ...prevRes] = await Promise.allSettled([
+    volumesParVille(token, top.slice(0, 20).map((k) => k.keyword)),
+    appareils(token, top.slice(0, 20).map((k) => k.keyword)),
+    ...budgets.map((b) => prevision(token, kwPrev, b)),
+  ]);
+  const regions = regRes.status === "fulfilled" ? regRes.value : [];
+  if (regRes.status === "rejected") console.error("analyse:regions", site.host, String(regRes.reason?.message || regRes.reason));
+  const devices = devRes.status === "fulfilled" ? devRes.value : [];
+  if (devRes.status === "rejected") console.error("analyse:devices", site.host, String(devRes.reason?.message || devRes.reason));
+  const scenarios = prevRes.map((p, i) => {
+    if (p.status === "fulfilled") return p.value;
+    console.error("analyse:forecast", site.host, String(p.reason?.message || p.reason));
+    return estimer(budgets[i]);
+  });
 
   return json({
     site: site.host,
@@ -337,6 +439,8 @@ export default async (req) => {
       concurrents: concurrents.slice(0, 5),
     },
     regions,
+    graphes: { intentions, concurrence: compMix, cpc: cpcMix, appareils: devices },
+    scenarios,
     rapport: {
       recherchesMarque: brand.reduce((s, k) => s + k.volume, 0),
       motsCles: top.slice(0, 15).map(fmtK),
