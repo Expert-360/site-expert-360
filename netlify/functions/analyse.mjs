@@ -161,8 +161,9 @@ export default async (req) => {
   const peak = season.indexOf(maxS), low = season.indexOf(minS);
 
   // Score de potentiel /100 : volume (45), valeur commerciale du clic (30), concurrence (25).
-  const sVolume = clamp(Math.log10(Math.max(totalVolume, 1)) / Math.log10(100000)) * 45;
-  const sValue = clamp(cpc / 6) * 30;
+  // Volume sur une échelle log de 100 à 50 000 recherches/mois ; CPC plafonné à 10 $.
+  const sVolume = clamp((Math.log10(Math.max(totalVolume, 1)) - 2) / (Math.log10(50000) - 2)) * 45;
+  const sValue = clamp(cpc / 10) * 30;
   const sComp = (1 - clamp(comp / 100)) * 25;
   const score = Math.round(sVolume + sValue + sComp);
   const scoreLabel = score >= 70 ? "Fort potentiel" : score >= 45 ? "Bon potentiel" : "Potentiel limité";
