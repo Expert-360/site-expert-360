@@ -58,6 +58,7 @@ async function keywordIdeas(token, seed) {
       geoTargetConstants: [GEO_QUEBEC],
       keywordPlanNetwork: "GOOGLE_SEARCH",
       includeAdultKeywords: false,
+      keywordAnnotation: ["KEYWORD_CONCEPT"],
       pageSize: 500,
       ...seed,
     }),
@@ -84,6 +85,11 @@ function toIdea(res) {
     low: m.lowTopOfPageBidMicros ? Number(m.lowTopOfPageBidMicros) / 1e6 : null,
     high: m.highTopOfPageBidMicros ? Number(m.highTopOfPageBidMicros) / 1e6 : null,
     months,
+    // Concepts de marque détectés par Google (filtre « Marque » du Keyword Planner)
+    brands: ((res.keywordAnnotations || {}).concepts || [])
+      .filter((c) => c.conceptGroup && /BRAND/.test(c.conceptGroup.type || "") && c.conceptGroup.type !== "NON_BRAND")
+      .map((c) => c.name)
+      .filter(Boolean),
   };
 }
 
@@ -142,9 +148,35 @@ export default async (req) => {
   }
 
   const brandSet = brandWords(site.host, all);
-  const isBrand = (k) => norm(k.keyword).split(/[^a-z0-9]+/).some((w) => brandSet.has(w));
+  const hostToken = norm(site.host.split(".")[0]).replace(/[^a-z0-9]/g, "");
+  const isOwnName = (name) => {
+    const n = norm(name).replace(/[^a-z0-9]/g, "");
+    return n.length >= 3 && (hostToken.includes(n) || n.includes(hostToken) ||
+      norm(name).split(/[^a-z0-9]+/).some((w) => brandSet.has(w)));
+  };
+  const isBrand = (k) =>
+    norm(k.keyword).split(/[^a-z0-9]+/).some((w) => brandSet.has(w)) || k.brands.some(isOwnName);
+
+  // Concurrents : marques repérées par Google dans les recherches du secteur (hors votre marque).
+  const compMap = new Map();
+  for (const k of all) {
+    if (isBrand(k)) continue;
+    for (const name of new Set(k.brands)) {
+      if (isOwnName(name)) continue;
+      const e = compMap.get(name) || { nom: name, recherches: 0, motCle: k.keyword, top: 0 };
+      e.recherches += k.volume;
+      if (k.volume > e.top) { e.top = k.volume; e.motCle = k.keyword; }
+      compMap.set(name, e);
+    }
+  }
+  const concurrents = [...compMap.values()]
+    .sort((a, b) => b.recherches - a.recherches)
+    .slice(0, 8)
+    .map(({ nom, recherches, motCle }) => ({ nom, recherches, motCle }));
+
   const brand = all.filter(isBrand);
-  const market = all.filter((k) => !isBrand(k)).sort((a, b) => b.volume - a.volume);
+  // Le marché exclut votre marque et celles des concurrents (recherches de marque = hors portée).
+  const market = all.filter((k) => !isBrand(k) && k.brands.length === 0).sort((a, b) => b.volume - a.volume);
   const top = market.slice(0, 50);
 
   const totalVolume = top.reduce((s, k) => s + k.volume, 0);
@@ -196,11 +228,14 @@ export default async (req) => {
       cpcMoyen: round(cpc),
       concurrence: compLabel(comp),
       concurrenceIndice: Math.round(comp),
+      motsClesPhares: top.slice(0, 4).map(fmtK),
+      concurrents: concurrents.slice(0, 5),
     },
     rapport: {
       recherchesMarque: brand.reduce((s, k) => s + k.volume, 0),
       motsCles: top.slice(0, 15).map(fmtK),
       opportunites,
+      concurrents,
       saisonnalite: season.map((v, i) => ({ mois: MOIS[i], recherches: v })),
       moisFort: MOIS[peak],
       moisFaible: MOIS[low],
