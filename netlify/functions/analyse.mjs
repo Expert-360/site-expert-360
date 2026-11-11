@@ -126,6 +126,53 @@ function brandWords(host, ideas) {
   return brand;
 }
 
+
+// Villes du Québec pour la répartition régionale (codes géo résolus une fois, puis gardés en mémoire).
+const VILLES = ["Montréal", "Québec", "Laval", "Gatineau", "Longueuil", "Sherbrooke", "Trois-Rivières", "Saguenay", "Lévis", "Terrebonne"];
+let villesCache = null;
+
+function adsHeaders(token) {
+  const cid = process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID;
+  return { Authorization: `Bearer ${token}`, "login-customer-id": cid, "Content-Type": "application/json" };
+}
+
+async function villesGeo(token) {
+  if (villesCache) return villesCache;
+  const r = await fetch(`${API}/geoTargetConstants:suggest`, {
+    method: "POST",
+    headers: adsHeaders(token),
+    body: JSON.stringify({ locale: "fr", countryCode: "CA", locationNames: { names: VILLES } }),
+  });
+  if (!r.ok) throw new Error("geo:" + r.status);
+  const out = [];
+  const sugg = (await r.json()).geoTargetConstantSuggestions || [];
+  for (const nom of VILLES) {
+    const hit = sugg.find((g) => g.searchTerm === nom && g.geoTargetConstant?.targetType === "City" &&
+      /Quebec,Canada$/.test(g.geoTargetConstant?.canonicalName || ""));
+    if (hit) out.push({ nom, geo: hit.geoTargetConstant.resourceName });
+  }
+  villesCache = out;
+  return out;
+}
+
+async function volumesParVille(token, keywords) {
+  const cid = process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID;
+  const villes = await villesGeo(token);
+  const res = await Promise.allSettled(villes.map(async (v) => {
+    const r = await fetch(`${API}/customers/${cid}:generateKeywordHistoricalMetrics`, {
+      method: "POST",
+      headers: adsHeaders(token),
+      body: JSON.stringify({ keywords, language: LANG_FR, geoTargetConstants: [v.geo], keywordPlanNetwork: "GOOGLE_SEARCH" }),
+    });
+    if (!r.ok) throw new Error("hist:" + r.status);
+    const j = await r.json();
+    const total = (j.results || []).reduce((s, x) => s + Number(x.keywordMetrics?.avgMonthlySearches || 0), 0);
+    return { ville: v.nom, recherches: total };
+  }));
+  return res.filter((x) => x.status === "fulfilled" && x.value.recherches > 0).map((x) => x.value)
+    .sort((a, b) => b.recherches - a.recherches);
+}
+
 const compLabel = (i) => (i === null ? "Inconnue" : i < 34 ? "Faible" : i < 67 ? "Moyenne" : "Élevée");
 const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
 const round = (x, d = 2) => Math.round(x * 10 ** d) / 10 ** d;
@@ -137,9 +184,9 @@ export default async (req) => {
   const site = parseSite(body.url);
   if (!site) return json({ error: "Adresse de site invalide. Exemple : votresite.ca" }, 400);
 
-  let raw;
+  let raw, token;
   try {
-    const token = await getAccessToken();
+    token = await getAccessToken();
     raw = await keywordIdeas(token, { siteSeed: { site: site.host } });
     if (raw.length < 10) raw = await keywordIdeas(token, { urlSeed: { url: site.url } });
     // 2e passe : élargir à partir des 3 recherches principales du secteur (sans marque),
@@ -265,8 +312,15 @@ export default async (req) => {
 
   const opportunites = market
     .filter((k) => k.compIndex !== null && k.compIndex < 34 && k.volume >= 50)
-    .slice(0, 6)
+    .slice(0, 8)
     .map(fmtK);
+
+  let regions = [];
+  try {
+    regions = await volumesParVille(token, top.slice(0, 20).map((k) => k.keyword));
+  } catch (e) {
+    console.error("analyse:regions", site.host, String(e.message || e));
+  }
 
   return json({
     site: site.host,
@@ -282,6 +336,7 @@ export default async (req) => {
       motsClesPhares: top.slice(0, 4).map(fmtK),
       concurrents: concurrents.slice(0, 5),
     },
+    regions,
     rapport: {
       recherchesMarque: brand.reduce((s, k) => s + k.volume, 0),
       motsCles: top.slice(0, 15).map(fmtK),
