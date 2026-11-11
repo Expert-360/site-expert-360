@@ -66,7 +66,12 @@
     var arc = $('g-arc'), sc = $('r-score'), target = a.score, n = 0;
     arc.style.transition = 'stroke-dashoffset 1.2s cubic-bezier(.65,0,.35,1)';
     requestAnimationFrame(function () { arc.style.strokeDashoffset = String(327 * (1 - target / 100)); });
-    (function count() { n = Math.min(target, n + 2); sc.textContent = n; if (n < target) requestAnimationFrame(count); })();
+    var t0 = Date.now();
+    var timer = setInterval(function () {
+      n = Math.min(target, Math.round(target * Math.min(1, (Date.now() - t0) / 1200)));
+      sc.textContent = n;
+      if (n >= target) clearInterval(timer);
+    }, 30);
     var lf = $('lead-form');
     lf.site.value = data.site; lf.score.value = a.score; lf.recherches.value = a.recherchesMois;
     lf.cpc.value = a.cpcMoyen; lf.concurrence.value = a.concurrence;
@@ -101,7 +106,7 @@
       var col = document.createElement('div'); col.className = 'sbar' + (m.mois === r.moisFort ? ' peak' : '');
       var b = document.createElement('i'); b.style.height = Math.max(4, Math.round((m.recherches / max) * 100)) + '%';
       b.title = m.mois + ' : ' + nf.format(m.recherches) + ' recherches';
-      var l = document.createElement('span'); l.textContent = m.mois;
+      var l = document.createElement('span'); l.textContent = window.innerWidth < 600 ? m.mois.charAt(0).toUpperCase() : m.mois;
       col.appendChild(b); col.appendChild(l); s.appendChild(col);
     });
     $('r-season-note').textContent = 'Mois le plus faible : ' + r.moisFaible + '. Le budget doit suivre cette courbe.';
