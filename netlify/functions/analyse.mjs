@@ -281,28 +281,65 @@ export default async (req) => {
   // 1. Le métier : ce que le site vend, lu dans son titre, sa description, ses titres et son menu.
   //    Le visiteur peut aussi le préciser lui-même (champ « metier », séparé par des virgules).
   const precise = String(body.metier || "").split(",").map((x) => x.trim()).filter((x) => x.length >= 3 && x.length <= 60).slice(0, 8);
-  const lecture = precise.length ? Promise.resolve(precise)
+  // Pages lues : l'accueil, puis les pages « Expertise » / « Services » trouvées dans le menu,
+  // ou à défaut aux adresses courantes (/expertise, /services…).
+  const CHEMINS = ["/expertise", "/expertises", "/services", "/nos-services", "/solutions"];
+  const lecture = precise.length ? Promise.resolve({ metier: precise, pagesServices: [], faible: false })
     : lirePage(new URL(parseUrl(site.url).origin + "/"), 5000).then(async (p) => {
-      // On lit aussi les pages « Expertise » / « Services » : c'est souvent là que le métier est décrit.
-      const pages = await Promise.all(liensServices(p.html, p.final).map((h) =>
-        lirePage(new URL(h), 3500).then((r) => r.html).catch(() => "")));
-      return extraireMetier(p.html, site.host, pages.filter(Boolean));
+      let liens = liensServices(p.html, p.final);
+      if (!liens.length) liens = CHEMINS.map((c) => p.final.origin + c);
+      const lues = (await Promise.all(liens.slice(0, 5).map((h) =>
+        lirePage(new URL(h), 3000).then((r) => ({ url: h, html: r.html })).catch(() => null)))).filter(Boolean).slice(0, 2);
+      const metierLu = extraireMetier(p.html, site.host, lues.map((x) => x.html));
+      // Site construit en JavaScript : les titres des services ne sont pas dans le code reçu.
+      const titres = lues.reduce((t, x) => t + (x.html.match(/<h[2-4][\s>]/gi) || []).length, 0);
+      return { metier: metierLu, pagesServices: lues.map((x) => x.url), faible: metierLu.length < 5 || (lues.length > 0 && titres < 3) };
     }).catch((e) => {
       console.error("analyse:lecture", site.host, String(e.message || e));
-      return [];
+      return { metier: [], pagesServices: [], faible: true };
     });
 
   let raw, token, metier = [];
   try {
-    [token, metier] = await Promise.all([getAccessToken(), lecture]);
-    // 2. Les recherches partent du métier. Sans métier lisible, on se rabat sur le site lui-même.
-    if (metier.length >= 2) raw = await keywordIdeas(token, { keywordSeed: { keywords: metier.slice(0, 10) } });
+    let lu;
+    [token, lu] = await Promise.all([getAccessToken(), lecture]);
+    metier = lu.metier;
+    // 2. Quand la lecture du site est pauvre, on demande à Google de lire la page des services
+    //    (son robot affiche les sites en JavaScript) et on en tire les métiers.
+    if (lu.faible) {
+      const pageGoogle = lu.pagesServices[0] || site.url;
+      try {
+        const viaGoogle = await keywordIdeas(token, { urlSeed: { url: pageGoogle } });
+        const tetes = new Set(metier.map((m) => norm(m).split(/[^a-z0-9]+/)[0]));
+        const ajout = [];
+        viaGoogle
+          .filter((r) => !((r.keywordAnnotations || {}).concepts || []).some((c) => /BRAND/.test(c.conceptGroup?.type || "") && c.conceptGroup.type !== "NON_BRAND"))
+          .filter((r) => !NEGATIFS.test(" " + norm(r.text).replace(/[^a-z0-9]+/g, " ") + " "))
+          .sort((x, y) => Number(y.keywordIdeaMetrics?.avgMonthlySearches || 0) - Number(x.keywordIdeaMetrics?.avgMonthlySearches || 0))
+          .forEach((r) => {
+            const mots = norm(r.text).split(/[^a-z0-9]+/).filter((w) => w.length >= 4 && !MOTS_LARGES.has(w));
+            const tete = mots[0];
+            if (!tete || tetes.has(tete) || ajout.length >= 8 || r.text.split(" ").length > 4) return;
+            tetes.add(tete); ajout.push(r.text);
+          });
+        metier = [...ajout, ...metier].slice(0, 10);
+        raw = viaGoogle;
+      } catch (e) {
+        console.error("analyse:urlseed", site.host, String(e.message || e));
+      }
+    }
+    // 3. Les recherches partent du métier. Sans métier lisible, on se rabat sur le site lui-même.
+    if (metier.length >= 2) {
+      const parMetier = await keywordIdeas(token, { keywordSeed: { keywords: metier.slice(0, 10) } });
+      const known = new Set((raw || []).map((r) => r.text));
+      raw = (raw || []).concat(parMetier.filter((r) => !known.has(r.text)));
+    }
     if (!raw || raw.length < 10) {
       raw = await keywordIdeas(token, { siteSeed: { site: site.host } });
       if (raw.length < 10) raw = await keywordIdeas(token, { urlSeed: { url: site.url } });
       if (metier.length < 2) metier = [];
     }
-    // 2e passe : élargir à partir des 3 recherches principales du métier (sans marque),
+  // 2e passe : élargir à partir des 3 recherches principales du métier (sans marque),
     // pour faire ressortir davantage de concurrents. En cas d'échec, on garde la 1re passe.
     const seeds = raw
       .filter((r) => !((r.keywordAnnotations || {}).concepts || []).some((c) => /BRAND/.test(c.conceptGroup?.type || "") && c.conceptGroup.type !== "NON_BRAND"))
