@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Audit Google Ads — APECQ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#14202b;--mute:#5b6773;--line:#e3e7eb;--bg:#f6f7f9;--card:#fff;--acc:#e8601c;--acc2:#1f4e79;--soft:#fdf0e8}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,sans-serif;color:var(--ink);background:var(--bg);line-height:1.5}
+.wrap{max-width:920px;margin:0 auto;padding:32px 20px 60px}
+header{border-bottom:3px solid var(--acc);padding-bottom:18px;margin-bottom:28px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--acc);font-weight:600}
+h1{font-size:30px;margin:6px 0 4px}h2{font-size:20px;margin:36px 0 12px;color:var(--acc2)}h2 span{color:var(--acc);margin-right:8px}
+.sub{color:var(--mute);font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:12px 0}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+.kpi b{display:block;font-size:26px}.kpi small{color:var(--mute);font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:9px 8px;border-bottom:1px solid var(--line);text-align:left}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--mute);font-weight:600}td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.bar{height:8px;background:var(--acc);border-radius:4px;min-width:2px}
+.tag{display:inline-block;font-size:12px;padding:2px 8px;border-radius:10px;font-weight:600}
+.f{background:#e6f4ea;color:#1e7b3a}.m{background:#fff4d6;color:#8a6200}.e{background:#fde4e1;color:#b3261e}
+.note{font-size:13px;color:var(--mute)}
+.chart{display:flex;align-items:flex-end;gap:6px;height:170px;padding-top:10px}
+.chart div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:11px;color:var(--mute)}
+.chart i{display:block;width:100%;background:var(--acc2);border-radius:4px 4px 0 0}.chart i.hi{background:var(--acc)}
+.chart em{font-style:normal;font-size:10px;margin-bottom:3px}
+ul{padding-left:20px}li{margin:6px 0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:640px){.grid2{grid-template-columns:1fr}h1{font-size:24px}}
+.callout{background:var(--soft);border-left:4px solid var(--acc);padding:12px 16px;border-radius:8px;margin:12px 0}
+footer{margin-top:40px;font-size:12px;color:var(--mute);border-top:1px solid var(--line);padding-top:12px}
+</style>
+</head>
+<body><div class="wrap">
+
+<header>
+<div class="eyebrow">Audit Google Ads · Québec · novembre 2026</div>
+<h1>APECQ — Association patronale des entreprises en construction du Québec</h1>
+<div class="sub">apecq.org · Données : Google Keyword Planner (moyenne mensuelle sur 12 mois, Québec, français)</div>
+</header>
+
+<h2><span>01</span>Le métier</h2>
+<div class="card">
+<p><b>Ce que l'APECQ vend :</b> une association patronale qui accompagne les entrepreneurs en construction, et qui génère ses revenus avec la formation et l'adhésion.</p>
+<div class="grid2">
+<div><b>Produits à fort enjeu</b><ul>
+<li>Formation pour la licence RBQ : entrepreneur spécialisé (3 505 $, 272 h) et entrepreneur général (4 384 $, 338 h), avec exemption d'examen</li>
+<li>Formation continue reconnue par la RBQ, la CMMTQ et la CMEQ</li>
+<li>Cours de santé et sécurité au travail (prévention des chutes, silice, SIMDUT…)</li></ul></div>
+<div><b>Services liés à l'adhésion</b><ul>
+<li>Mutuelle de prévention</li><li>Cautionnement et plan de garantie</li>
+<li>Assistance sur la loi R-20 et les conventions collectives</li><li>Démarrage d'entreprise, rabais pour les membres</li></ul></div>
+</div>
+<p class="note">Clientèle : futurs entrepreneurs, entrepreneurs titulaires d'une licence RBQ et gestionnaires de la construction.</p>
+</div>
+
+<h2><span>02</span>Le marché sur Google</h2>
+<div class="kpis">
+<div class="kpi"><b>≈ 1 700</b><small>recherches par mois avec une intention de formation pour la licence RBQ</small></div>
+<div class="kpi"><b>8 100</b><small>recherches pour « licence rbq », un terme large et ambigu (voir plus bas)</small></div>
+<div class="kpi"><b>4,17 $</b><small>coût par clic moyen sur le thème de la licence</small></div>
+<div class="kpi"><b>0</b><small>recherche sur la marque « APECQ »</small></div>
+</div>
+
+<div class="card">
+<table>
+<tr><th>Thème</th><th class="n">Recherches par mois</th><th>Lecture</th></tr>
+<tr><td><b>Licence RBQ</b> (formation, examen, cours)</td><td class="n">≈ 1 700 qualifiées<br><span class="note">10 070 au total</span></td><td>Le gros marché, avec une intention d'achat claire</td></tr>
+<tr><td><b>Services aux membres</b> (mutuelle, R-20, conventions)</td><td class="n">≈ 500</td><td>Surtout « mutuelle de prévention » (320)</td></tr>
+<tr><td><b>Cours de santé et sécurité</b></td><td class="n">≈ 120</td><td>Les gens cherchent un sujet précis, ou l'ASP Construction</td></tr>
+<tr><td><b>Formation continue RBQ</b></td><td class="n">trop faible</td><td>Google n'a pas assez de données : personne ne cherche « formation continue RBQ »</td></tr>
+</table>
+</div>
+<div class="callout"><b>Le piège de « licence rbq » :</b> ce terme fait 8 100 recherches par mois, mais il mélange des futurs entrepreneurs, des entrepreneurs qui renouvellent leur licence et des particuliers qui vérifient celle d'un entrepreneur. Une campagne sur ce terme seul gaspillerait une grande partie du budget. Les recherches réellement liées à la formation font environ 1 700 par mois.</div>
+
+<h2><span>03</span>Les recherches principales liées au métier</h2>
+<div class="card">
+<table>
+<tr><th>Recherche</th><th class="n">Volume</th><th style="width:22%"></th><th class="n">CPC (fourchette)</th><th>Concurrence</th></tr>
+<tr><td>licence rbq</td><td class="n">8 100</td><td><div class="bar" style="width:100%"></div></td><td class="n">1,53 – 6,83 $</td><td><span class="tag f">Faible</span></td></tr>
+<tr><td>rbq licence entrepreneur</td><td class="n">480</td><td><div class="bar" style="width:6%"></div></td><td class="n">1,53 – 4,84 $</td><td><span class="tag f">Faible</span></td></tr>
+<tr><td>examens rbq</td><td class="n">320</td><td><div class="bar" style="width:4%"></div></td><td class="n">1,66 – 7,45 $</td><td><span class="tag m">Moyenne</span></td></tr>
+<tr><td>mutuelle de prévention</td><td class="n">320</td><td><div class="bar" style="width:4%"></div></td><td class="n">2,32 – 4,08 $</td><td><span class="tag m">Moyenne</span></td></tr>
+<tr><td>licence rbq prix</td><td class="n">140</td><td><div class="bar" style="width:2%"></div></td><td class="n">1,13 – 3,83 $</td><td><span class="tag m">Moyenne</span></td></tr>
+<tr><td>obtenir licence rbq rapidement</td><td class="n">140</td><td><div class="bar" style="width:2%"></div></td><td class="n">1,40 – 5,35 $</td><td><span class="tag m">Moyenne</span></td></tr>
+<tr><td>licence rbq entrepreneur général</td><td class="n">110</td><td><div class="bar" style="width:1.5%"></div></td><td class="n">1,53 – 5,51 $</td><td><span class="tag m">Moyenne</span></td></tr>
+<tr><td>licence rbq entrepreneur spécialisé</td><td class="n">110</td><td><div class="bar" style="width:1.5%"></div></td><td class="n">1,37 – 4,59 $</td><td><span class="tag m">Moyenne</span></td></tr>
+<tr><td>travail en hauteur</td><td class="n">110</td><td><div class="bar" style="width:1.5%"></div></td><td class="n">1,36 – 6,70 $</td><td><span class="tag f">Faible</span></td></tr>
+<tr><td>obtenir licence rbq</td><td class="n">90</td><td><div class="bar" style="width:1.2%"></div></td><td class="n">1,39 – 11,42 $</td><td><span class="tag m">Moyenne</span></td></tr>
+<tr><td>cours licence rbq</td><td class="n">90</td><td><div class="bar" style="width:1.2%"></div></td><td class="n">1,55 – 8,20 $</td><td><span class="tag e">Élevée</span></td></tr>
+<tr><td>convention collective construction</td><td class="n">90</td><td><div class="bar" style="width:1.2%"></div></td><td class="n">—</td><td><span class="tag f">Faible</span></td></tr>
+</table>
+<p class="note">Rejetées à la main parce qu'elles ne sont pas liées au métier : « harnais de sécurité » (achat de produit), « rbq vérifier licence » (particuliers), ainsi que tout ce que Google proposait hors du secteur.</p>
+</div>
+
+<h2><span>04</span>Saisonnalité et régions</h2>
+<div class="card">
+<b>Recherches sur le thème de la licence RBQ, par mois</b>
+<div class="chart">
+<div><em>8,9k</em><i style="height:72%"></i>janv.</div><div><em>9,0k</em><i style="height:73%"></i>févr.</div>
+<div><em>12,2k</em><i class="hi" style="height:99%"></i>mars</div><div><em>12,3k</em><i class="hi" style="height:100%"></i>avr.</div>
+<div><em>12,1k</em><i class="hi" style="height:98%"></i>mai</div><div><em>10,3k</em><i style="height:83%"></i>juin</div>
+<div><em>8,4k</em><i style="height:68%"></i>juil.</div><div><em>10,0k</em><i style="height:81%"></i>août</div>
+<div><em>9,9k</em><i style="height:81%"></i>sept.</div><div><em>8,4k</em><i style="height:68%"></i>oct.</div>
+<div><em>8,3k</em><i style="height:68%"></i>nov.</div><div><em>6,0k</em><i style="height:48%"></i>déc.</div>
+</div>
+<p class="note">Le pic va de mars à mai, avant la saison de construction, et le creux tombe en décembre. La formation continue suit sa propre échéance : la période s'est terminée le 31 mars 2026, donc la prochaine devrait tomber vers mars 2028.</p>
+</div>
+<div class="card">
+<b>Où ça cherche (thème de la licence)</b>
+<table>
+<tr><td>Montréal</td><td class="n">1 960</td><td style="width:55%"><div class="bar" style="width:100%"></div></td></tr>
+<tr><td>Québec</td><td class="n">830</td><td><div class="bar" style="width:42%"></div></td></tr>
+<tr><td>Laval</td><td class="n">600</td><td><div class="bar" style="width:31%"></div></td></tr>
+<tr><td>Longueuil</td><td class="n">410</td><td><div class="bar" style="width:21%"></div></td></tr>
+<tr><td>Terrebonne</td><td class="n">360</td><td><div class="bar" style="width:18%"></div></td></tr>
+<tr><td>Gatineau</td><td class="n">350</td><td><div class="bar" style="width:18%"></div></td></tr>
+</table>
+</div>
+
+<h2><span>05</span>Concurrents</h2>
+<div class="card">
+<table>
+<tr><th>Concurrent</th><th>Où il est présent</th><th class="n">Recherches par mois</th></tr>
+<tr><td><b>ASP Construction</b></td><td>Cours de santé et sécurité en ligne (« asp construction en ligne »)</td><td class="n">1 540</td></tr>
+<tr><td><b>SIMDUT (formations en ligne)</b></td><td>« simdut 2015 », capté surtout par des formateurs en ligne</td><td class="n">1 260</td></tr>
+<tr><td><b>APCHQ</b></td><td>Licence RBQ (« apchq licence rbq »), formation continue</td><td class="n">40</td></tr>
+<tr><td><b>ACQ</b></td><td>Mutuelle de prévention, cautionnement offert avec l'adhésion</td><td class="n">30</td></tr>
+<tr><td><b>CESGM, AEMQ, Formation Construction</b></td><td>Programmes de licence reconnus par la RBQ, en ligne et en mode asynchrone</td><td class="n">—</td></tr>
+</table>
+<p class="note">La RBQ, la CCQ et la CNESST apparaissent aussi dans les recherches, mais ce sont des organismes, pas des concurrents. Les annonces actives des concurrents restent à vérifier dans le Centre de transparence des annonces de Google.</p>
+</div>
+
+<h2><span>06</span>Ce que je remarque</h2>
+<div class="card"><ul>
+<li><b>La licence RBQ est la priorité.</b> Environ 1 700 recherches qualifiées par mois, une concurrence faible à moyenne et un coût par clic d'environ 4 $, pour un produit qui vaut de 3 500 à 4 400 $. C'est le meilleur rapport entre le coût et la valeur.</li>
+<li><b>Les recherches les plus prêtes à acheter</b> sont « licence rbq prix », « obtenir licence rbq rapidement » et « cours licence rbq ». Elles demandent des annonces qui affichent le prix, l'économie de 782 à 897 $ pour les membres et l'exemption d'examen.</li>
+<li><b>Il faut deux pages de destination</b>, une pour la licence d'entrepreneur général et une pour la licence d'entrepreneur spécialisé. Les gens cherchent les deux séparément.</li>
+<li><b>Les recherches génériques sur la formation continue ne fonctionneront pas</b> : personne ne tape « formation continue RBQ ». On les remplace par des campagnes par sujet (travail en hauteur, SIMDUT…), face à l'ASP Construction, qui domine ces recherches.</li>
+<li><b>La marque n'existe pas sur Google</b> (0 recherche). Google Ads doit capter le besoin. Le remarketing transforme ensuite les visiteurs des formations en membres.</li>
+<li><b>Mots-clés négatifs dès le départ :</b> vérifier, registre, harnais, emploi, gratuit, PDF, corrigé.</li>
+</ul></div>
+
+<h2><span>07</span>Budget indicatif</h2>
+<div class="card">
+<table>
+<tr><th>Campagne</th><th class="n">Budget par mois</th><th>Ajustement saisonnier</th></tr>
+<tr><td>Licence RBQ (général et spécialisé)</td><td class="n">1 000 – 1 500 $</td><td>+30 % de mars à mai, −40 % en décembre</td></tr>
+<tr><td>Mutuelle de prévention</td><td class="n">200 – 300 $</td><td>Stable</td></tr>
+<tr><td>Cours de santé et sécurité (par sujet)</td><td class="n">150 – 250 $</td><td>À tester</td></tr>
+<tr><td>Remarketing vers l'adhésion</td><td class="n">100 – 150 $</td><td>Stable</td></tr>
+<tr><td><b>Total</b></td><td class="n"><b>≈ 1 450 – 2 200 $</b></td><td></td></tr>
+</table>
+<p class="note">Estimation : à 1 500 $ par mois sur la licence, environ 360 clics. Si 3 à 5 % des visiteurs demandent de l'information et qu'une demande sur quatre aboutit à une inscription, on parle de 3 à 4 inscriptions par mois, soit environ 10 000 à 17 000 $ de formation. Ce sont des hypothèses à valider avec les vraies données de conversion.</p>
+</div>
+
+<h2><span>08</span>Méthode et limites</h2>
+<div class="card note">
+<p><b>Méthode :</b> j'ai lu le site pour comprendre le métier et les services, puis j'ai interrogé Google Keyword Planner service par service (API, compte gestionnaire Expert 360). J'ai ensuite gardé uniquement les recherches liées au métier.</p>
+<p><b>Limites :</b> les volumes sont des moyennes arrondies de Google. Les coûts par clic sont des fourchettes pour une annonce en haut de page. La recherche en anglais n'est pas incluse. Les annonces actives des concurrents ne sont pas vérifiées. L'historique Google Ads de l'APECQ, s'il existe, n'a pas été consulté.</p>
+</div>
+
+<footer>Préparé par Expert 360 · expert-360.ca</footer>
+</div></body></html>

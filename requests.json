@@ -1,6 +1,5 @@
 [
- {"id":"A-licence","url":"apecq.example","metier":"formation licence rbq, cours licence rbq, licence rbq, examen rbq, licence entrepreneur général, licence entrepreneur spécialisé, cours rbq en ligne, devenir entrepreneur construction"},
- {"id":"B-fco","url":"apecq.example","metier":"formation continue rbq, formation continue obligatoire rbq, fco rbq, formation continue entrepreneur, formation continue construction, heures formation continue rbq"},
- {"id":"C-cours","url":"apecq.example","metier":"formation sst construction, formation prévention des chutes, formation silice, formation simdut, formation paie ccq, formation travail en hauteur, formation santé sécurité chantier, cours asp construction"},
- {"id":"D-services","url":"apecq.example","metier":"association entrepreneurs construction, association patronale construction, cautionnement licence rbq, mutuelle de prévention, plan de garantie condo, démarrer entreprise construction, loi r-20, convention collective construction"}
+ {"id":"O1-neutre","url":"erp-quebec.example","metier":"odoo, odoo erp, odoo crm, intégration odoo, implantation odoo, consultant odoo, partenaire odoo, odoo montréal"},
+ {"id":"O2-marque","url":"odoo.example","metier":"odoo, odoo erp, odoo crm, intégration odoo, implantation odoo, consultant odoo, partenaire odoo, odoo montréal"},
+ {"id":"O3-marche","url":"erp-quebec.example","metier":"logiciel erp, erp pme, intégration erp, implantation erp, logiciel de gestion d'entreprise, erp québec, crm pme, logiciel crm"}
 ]
