@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="fr-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Audit Google Ads gratuit : le potentiel de votre secteur au Québec | Expert 360</title>
+<meta name="description" content="Entrez votre site et découvrez en quelques secondes le potentiel Google Ads de votre secteur au Québec : recherches par mois, coût par clic, concurrence et saisonnalité.">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+<link rel="canonical" href="https://expert-360.ca/audit-google-ads">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="fr_CA">
+<meta property="og:site_name" content="Expert 360">
+<meta property="og:title" content="Audit Google Ads gratuit : le potentiel de votre secteur au Québec | Expert 360">
+<meta property="og:description" content="Entrez votre site et découvrez en quelques secondes le potentiel Google Ads de votre secteur au Québec : recherches par mois, coût par clic, concurrence et saisonnalité.">
+<meta property="og:url" content="https://expert-360.ca/audit-google-ads">
+<meta property="og:image" content="https://expert-360.ca/og-expert-360.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0E2A3B">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png">
+<link rel="manifest" href="/site.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/site.css">
+<style>
+.audit-intro{display:flex;flex-direction:column;gap:24px;max-width:860px}
+.audit-form{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}
+.audit-form input{flex:1 1 320px;min-height:60px;border:1.5px solid var(--navy);border-radius:999px;padding:0 26px;font:inherit;font-size:18px;background:#fff;color:var(--navy)}
+.audit-form input:focus{outline:3px solid var(--blue);outline-offset:2px}
+.audit-form .btn{min-height:60px}
+.audit-note{font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.02em}
+.audit-error{color:#B3261E;font-weight:600}
+.audit-panel{padding:clamp(48px,6vw,88px) 0;scroll-margin-top:84px}
+.report,.gate{scroll-margin-top:100px}
+.progress-box{max-width:640px;display:flex;flex-direction:column;gap:22px}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px;counter-reset:s}
+.steps li{position:relative;padding-left:44px;font-size:19px;color:#9AAAB5;counter-increment:s;transition:color .3s}
+.steps li::before{content:counter(s);position:absolute;left:0;top:-2px;width:30px;height:30px;border-radius:50%;border:1.5px solid #C9D6DE;display:grid;place-items:center;font-family:var(--mono);font-size:13px}
+.steps li.active{color:var(--navy);font-weight:700}
+.steps li.active::before{border-color:var(--orange);background:var(--orange);color:var(--navy);animation:pulse 1s ease-in-out infinite}
+.steps li.done{color:var(--navy)}
+.steps li.done::before{content:"✓";background:var(--navy);border-color:var(--navy);color:#fff}
+@keyframes pulse{50%{transform:scale(1.12)}}
+.pbar{height:8px;border-radius:99px;background:var(--chip);overflow:hidden}
+.pbar i{display:block;height:100%;width:0;background:var(--orange);border-radius:99px;transition:width .8s ease}
+.result-grid{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:24px}
+.score-card{align-items:center;text-align:center;justify-content:center}
+.gauge{position:relative;width:210px;height:210px}
+.gauge svg{width:100%;height:100%}
+.gauge b{position:absolute;inset:0;display:grid;place-items:center;font-size:64px;font-weight:800;font-stretch:125%;letter-spacing:-.03em;padding-bottom:14px}
+.gauge span{position:absolute;left:0;right:0;bottom:58px;font-family:var(--mono);font-size:14px;color:var(--muted-dark)}
+.score-label{font-size:22px !important;font-weight:700;color:#fff !important}
+.kpi-col{display:grid;gap:16px}
+.kpi-card{gap:6px !important;padding:22px 28px !important}
+.kpi-card b{font-size:clamp(30px,3vw,42px);font-weight:800;font-stretch:115%;letter-spacing:-.02em}
+.kpi-card p{font-size:14px !important}
+.preview-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:24px;margin-top:24px}
+.preview-grid h3{font-size:clamp(19px,1.6vw,23px)}
+.comp-list{list-style:none;margin:0;padding:0;display:grid;gap:12px;counter-reset:c}
+.comp-list li{display:grid;grid-template-columns:28px 1fr auto;gap:4px 10px;align-items:center;counter-increment:c}
+.comp-list li::before{content:counter(c);font-family:var(--mono);font-size:13px;color:var(--muted-dark)}
+.comp-list b{font-size:17px}
+.comp-list small{font-family:var(--mono);font-size:12px;color:var(--muted-dark-2);text-align:right}
+.comp-list i{grid-column:2/4;display:block;height:6px;border-radius:9px;background:var(--orange)}
+.comp-card p{font-size:14px !important}
+.badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:13px;font-weight:600}
+.b-faible{background:#DDF3E4;color:#1D6B3A}.b-moyenne{background:var(--t-yellow);color:#7A5300}.b-elevee{background:var(--t-orange);color:var(--orange-dark)}
+@media (max-width:980px){.preview-grid{grid-template-columns:1fr}}
+.gate{position:relative;margin-top:28px}
+.gate-preview{display:grid;gap:12px;filter:blur(3px);opacity:.55}
+.fake-row{height:54px;border-radius:14px;background:linear-gradient(90deg,var(--chip) 0 45%,transparent 45% 48%,var(--chip) 48% 68%,transparent 68% 71%,var(--chip) 71%)}
+.gate-box{position:relative;margin:-210px auto 0;max-width:560px;box-shadow:0 20px 60px rgba(14,42,59,.18)}
+.gate-box h3{font-size:clamp(22px,2vw,28px)}
+.gate-list{margin:0;padding-left:20px;color:var(--muted);display:grid;gap:6px}
+.lead-form{display:grid;gap:8px}
+.lead-form label{font-size:14px;font-weight:600;margin-top:6px}
+.lead-form input[type=text],.lead-form input[type=email]{min-height:50px;border:1.5px solid var(--line);border-radius:12px;padding:0 16px;font:inherit;font-size:16px}
+.lead-form input:focus{outline:3px solid var(--blue);outline-offset:1px;border-color:var(--blue)}
+.lead-form .consent{display:flex;gap:10px;align-items:flex-start;font-weight:400;color:var(--muted)}
+.lead-form .consent input{margin-top:4px}
+.lead-form .consent a{text-decoration:underline}
+.lead-form .btn{margin-top:10px}
+.report{display:flex;flex-direction:column;gap:24px;margin-top:28px}
+.season{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:6px;height:170px;align-items:end}
+.sbar{display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.sbar i{display:block;width:100%;max-width:28px;border-radius:6px 6px 2px 2px;background:var(--t-blue)}
+.sbar.peak i{background:var(--orange)}
+.sbar span{font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+.table-wrap{overflow-x:auto}
+.kw-table{width:100%;border-collapse:collapse;font-size:15px}
+.kw-table th{text-align:left;font-family:var(--mono);font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:10px 12px;border-bottom:1.5px solid var(--navy)}
+.kw-table td{padding:11px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+.kw-table td:first-child{white-space:normal;font-weight:600}
+.opp-chips .chip{font-size:15px;padding:8px 14px;background:var(--t-yellow)}
+.cta-card{flex-direction:row !important;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.cta-card div{max-width:620px;display:grid;gap:10px}
+#restart{align-self:flex-start}
+@media (max-width:980px){.result-grid{grid-template-columns:1fr}.gate-box{margin-top:-160px}}
+@media (max-width:600px){.audit-form .btn{flex:1 1 100%}.steps li{font-size:17px}.season span{font-size:9px}}
+.insight-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-top:24px}
+.insight-wide{grid-column:1/-1}
+.insight h3{font-size:clamp(19px,1.6vw,23px)}
+.insight-note{font-size:14px !important}
+.rank-list{list-style:none;margin:0;padding:0;display:grid;gap:10px;counter-reset:r}
+.rank-list li{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:4px 10px;align-items:center;counter-increment:r;padding:6px 0;border-bottom:1px solid var(--line)}
+.rank-list li:last-child{border-bottom:0}
+.rank-list li::before{content:counter(r);font-family:var(--mono);font-size:13px;color:var(--muted)}
+.rank-list b{font-size:16px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rank-list small{font-family:var(--mono);font-size:12.5px;color:var(--muted);text-align:right;white-space:nowrap}
+.rank-list i{grid-column:2/4;display:block;height:5px;border-radius:9px;background:var(--orange)}
+.rank-dark li{border-color:rgba(255,255,255,.12)}
+.rank-dark li::before,.rank-dark small{color:var(--muted-dark)}
+.locked{filter:blur(5px);user-select:none;pointer-events:none;opacity:.75}
+tr.locked td{filter:blur(5px)}
+.more-row{list-style:none}
+.lock-tag{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:12px;letter-spacing:.04em;text-transform:uppercase;background:var(--navy);color:#fff;padding:6px 12px;border-radius:99px}
+.rank-dark .lock-tag,.card-dark .lock-tag{background:var(--orange);color:var(--navy)}
+.lock-tag::before{content:"🔒";font-size:11px}
+.lock-line{display:flex;justify-content:center;padding-top:6px}
+.locked-wrap{position:relative}
+.locked-wrap .lock-season{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
+.unlock{flex-direction:row !important;align-items:center;justify-content:space-between;gap:28px !important;flex-wrap:wrap;margin-top:24px;position:sticky;bottom:16px;z-index:5;box-shadow:0 18px 50px rgba(14,42,59,.3)}
+.unlock-text{max-width:460px;display:grid;gap:8px}
+.unlock-text h3{color:#fff;font-size:clamp(20px,1.8vw,26px)}
+.unlock-form{display:flex;flex-wrap:wrap;gap:10px;flex:1 1 380px;max-width:560px}
+.unlock-form input[type=email]{flex:1 1 240px;min-height:54px;border:0;border-radius:999px;padding:0 22px;font:inherit;font-size:17px;color:var(--navy)}
+.unlock-form input:focus{outline:3px solid var(--orange);outline-offset:2px}
+.unlock-form .btn{min-height:54px}
+.unlock-legal{flex-basis:100%;font-size:12.5px !important;color:var(--muted-dark) !important}
+.unlock-legal a{text-decoration:underline;color:inherit}
+.unlock.done{display:none}
+@media (max-width:980px){.insight-grid{grid-template-columns:1fr}.unlock{position:static}}
+
+.dash-top{display:grid;grid-template-columns:1fr;gap:24px}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+@media (max-width:980px){.kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi-accent{background:var(--t-orange) !important;border-color:transparent !important}
+.dash-head{display:grid;gap:6px;margin:56px 0 20px}
+.dash-h{font-size:clamp(22px,2.2vw,30px);font-weight:800;font-stretch:110%;letter-spacing:-.01em}
+.dash-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+.dash-wide{grid-column:1/-1}
+.chart-card{gap:10px !important}
+.chart-card h4,.site-card h4{font-size:18px;font-weight:700;margin:0}
+.chart-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.chart-note{font-size:14px !important;max-width:420px}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart-bars svg{max-height:260px}
+#r-scen-note{margin-top:12px}
+#restart{margin-top:8px}
+.metier-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin:-8px 0 28px;padding:16px 20px;border:1px solid var(--line);border-radius:16px;background:var(--ground)}
+.metier-chips{display:flex;flex-wrap:wrap;gap:8px;flex:1 1 300px}
+.metier-chip{background:#fff !important;border:1px solid var(--line);font-size:14px;padding:6px 12px;border-radius:99px}
+.metier-none{color:var(--muted);font-size:14px}
+.metier-edit{background:none;border:0;padding:0;font:inherit;font-size:14px;font-weight:600;color:var(--blue);text-decoration:underline;cursor:pointer}
+.metier-form{flex-basis:100%;display:flex;flex-wrap:wrap;gap:10px}
+.metier-form input{flex:1 1 320px;min-height:46px;border:1.5px solid var(--navy);border-radius:999px;padding:0 18px;font:inherit;font-size:16px}
+.metier-form .audit-note{flex-basis:100%}
+.rank-list li.lock-line::before,.rank-list li.more-row::before{content:none}
+.rank-list li.lock-line,.rank-list li.more-row{display:flex;border-bottom:0}
+.unlock-fab{display:none}
+@media (max-width:980px){.unlock-fab:not([hidden]){display:inline-flex;position:fixed;left:16px;right:16px;bottom:14px;z-index:20;justify-content:center;box-shadow:0 12px 30px rgba(14,42,59,.35)}}
+.insight-grid{align-items:start}
+.chart text{font-family:var(--mono);font-size:11px;fill:var(--muted)}
+.chart .v{font-size:11px;fill:var(--navy);font-weight:500}
+.donut-wrap{display:grid;grid-template-columns:150px minmax(0,1fr);gap:20px;align-items:center}
+.donut-wrap svg{width:150px;height:150px}
+.donut-wrap .center{font-family:var(--sans);font-size:22px;font-weight:800;fill:var(--navy)}
+.donut-wrap .center-sub{font-size:9.5px}
+.legend{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.legend li{display:grid;grid-template-columns:12px minmax(0,1fr) auto;gap:10px;align-items:center;font-size:15px}
+.legend i{width:12px;height:12px;border-radius:3px}
+.legend b{font-family:var(--mono);font-size:13px;font-weight:500}
+.hbars{display:grid;gap:12px}
+.hbar{display:grid;grid-template-columns:150px minmax(0,1fr) 56px;gap:10px;align-items:center;font-size:14px}
+.hbar em{font-style:normal;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hbar .track{height:14px;border-radius:7px;background:var(--chip);overflow:hidden}
+.hbar .track i{display:block;height:100%;border-radius:7px;background:var(--blue)}
+.top-kw .hbar{grid-template-columns:minmax(0,260px) minmax(0,1fr) 64px 96px}
+.lang-tag{display:inline-block;margin-left:8px;font-family:var(--mono);font-size:10px;font-weight:600;padding:1px 6px;border-radius:4px;background:var(--chip);color:var(--muted);vertical-align:middle}
+.top-kw .kw-comp{display:flex;justify-content:flex-end}
+.top-kw .hbar-head span{height:auto!important;background:none!important;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.top-kw .hbar-head span:nth-child(3),.top-kw .hbar-head span:nth-child(4){text-align:right}
+@media (max-width:600px){.top-kw .hbar{grid-template-columns:minmax(0,1fr) 48px 78px}.top-kw .hbar .track,.top-kw .hbar-head span:nth-child(2){display:none}}
+.hbar.me em{font-weight:700}.hbar.me .track i{background:var(--orange)}
+.hbar b{font-family:var(--mono);font-size:13px;font-weight:500;text-align:right}
+.chart-empty{color:var(--muted);font-size:15px}
+.site-card{display:grid !important;grid-template-columns:minmax(0,280px) minmax(0,1fr);gap:28px !important;align-items:start}
+.site-score{display:grid;gap:14px;justify-items:start}
+.mini-gauge{position:relative;width:130px;height:130px}
+.mini-gauge svg{width:100%;height:100%}
+.mini-gauge b{position:absolute;inset:0;display:grid;place-items:center;font-size:36px;font-weight:800;font-stretch:120%}
+.site-score-label{font-size:19px}
+.site-score p{font-size:14px !important;margin-top:4px}
+.check-list{list-style:none;margin:0;padding:0;display:grid;gap:0}
+.check-list li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:4px 12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.check-list li:last-child{border-bottom:0}
+.check-list .dot{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:800;grid-row:span 2}
+.dot.ok{background:#DDF3E4;color:#1D6B3A}.dot.warn{background:var(--t-yellow);color:#7A5300}.dot.bad{background:#FBE0DD;color:#B3261E}
+.check-list b{font-size:16px}
+.check-list small{font-size:14px;color:var(--muted);line-height:1.45}
+.scen-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.scen{gap:10px !important}
+.scen .amount{font-size:clamp(28px,2.6vw,38px);font-weight:800;font-stretch:115%;letter-spacing:-.02em}
+.scen dl{display:grid;grid-template-columns:1fr auto;gap:8px 12px;margin:6px 0 0;font-size:15px}
+.scen dt{color:var(--muted)}
+.scen dd{margin:0;font-family:var(--mono);font-weight:500;text-align:right}
+.scen.card-dark dt{color:var(--muted-dark)}
+.scen-tag{justify-self:start;font-family:var(--mono);font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;padding:4px 10px;border-radius:99px;background:var(--chip)}
+.card-dark .scen-tag{background:var(--orange);color:var(--navy)}
+.scen-locked{position:relative}
+.scen-locked>.inner{filter:blur(6px);user-select:none;pointer-events:none}
+.scen-locked>.lock-tag{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);white-space:nowrap}
+.rank-2col{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:32px}
+.rank-2col .lock-line,.rank-2col .more-row{grid-column:1/-1}
+.check-list .lock-line{display:flex;grid-template-columns:none;border-bottom:0}
+@media (max-width:980px){.dash-top,.site-card{grid-template-columns:1fr}.dash-grid{grid-template-columns:1fr}.scen-grid{grid-template-columns:1fr}.rank-2col{grid-template-columns:1fr}}
+@media (max-width:600px){.kpi-grid{grid-template-columns:1fr 1fr;gap:12px}.kpi-card{padding:16px 18px !important}.kpi-card b{font-size:26px}.kpi-card p{font-size:12.5px !important}.donut-wrap{grid-template-columns:1fr;justify-items:center}.legend{width:100%}.hbar{grid-template-columns:110px minmax(0,1fr) 48px;font-size:13px}}
+.scen .inner{display:grid;gap:10px}
+.check-msg{display:block !important;color:var(--muted)}
+</style>
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebApplication","@id":"https://expert-360.ca/audit-google-ads#app","name":"Audit Google Ads gratuit","url":"https://expert-360.ca/audit-google-ads","applicationCategory":"BusinessApplication","operatingSystem":"Web","inLanguage":"fr-CA","description":"Entrez votre site et découvrez en quelques secondes le potentiel Google Ads de votre secteur au Québec : recherches par mois, coût par clic, concurrence et saisonnalité.","offers":{"@type":"Offer","price":"0","priceCurrency":"CAD"},"provider":{"@id":"https://expert-360.ca/#org"}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Accueil","item":"https://expert-360.ca/"},{"@type":"ListItem","position":2,"name":"Acquisition PPC","item":"https://expert-360.ca/acquisition-ppc"},{"@type":"ListItem","position":3,"name":"Audit Google Ads gratuit","item":"https://expert-360.ca/audit-google-ads"}]}]}</script>
+</head>
+<body>
+<a class="skip" href="#contenu">Aller au contenu</a>
+<header class="site-header">
+<div class="container nav">
+<a class="nav-logo" href="/" aria-label="Expert 360, accueil"><img src="/logo-expert-360.png" alt="Expert 360" width="390" height="80"></a>
+<nav class="nav-links" aria-label="Navigation principale"><a href="/#services">Services</a><a href="/#approche">Approche</a><a href="/#realisations">Réalisations</a><a href="/#contact">Contact</a></nav>
+<div class="nav-cta">
+<a class="btn btn-dark btn-sm" href="https://calendly.com/lamri-l8ih/30min" target="_blank" rel="noopener">Réserver un appel <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a>
+<button class="menu-toggle" type="button" aria-expanded="false" aria-controls="menu-mobile" aria-label="Ouvrir le menu"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 6h14M3 10h14M3 14h9"/></svg></button>
+</div>
+</div>
+<nav id="menu-mobile" class="mobile-menu" hidden aria-label="Menu mobile">
+<a href="/#services">Services</a><a class="sub" href="/email-sms">Email & SMS marketing</a><a class="sub" href="/acquisition-ppc">Acquisition PPC</a><a class="sub" href="/design-ux">Design UI / UX</a><a class="sub" href="/crm-data-parcours">CRM, data & parcours client</a><a class="sub" href="/integration-ia">Intégration IA</a>
+<a href="/#approche">Approche</a>
+<a href="/#realisations">Réalisations</a>
+<a href="/#contact">Contact</a>
+<a class="btn btn-orange" href="https://calendly.com/lamri-l8ih/30min" target="_blank" rel="noopener">Réserver un appel <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a>
+</nav>
+</header>
+<main id="contenu">
+<section class="hero audit-hero">
+<div class="container">
+<div class="audit-intro">
+<div class="crumbs"><a href="/acquisition-ppc">Acquisition PPC</a><span aria-hidden="true">/</span><span>Audit Google Ads gratuit</span></div>
+<h1 class="display h1-sm">Votre secteur a-t-il du potentiel <span class="accent">sur Google&nbsp;Ads&nbsp;?</span></h1>
+<p class="lead">Entrez l'adresse de votre site. Vous obtenez en quelques secondes un tableau de bord complet : le marché de votre secteur au Québec, vos concurrents, la préparation de votre site et ce que votre budget vous rapporterait.</p>
+<form id="audit-form" class="audit-form" novalidate>
+<label class="sr-only" for="audit-url">Adresse de votre site web</label>
+<input id="audit-url" name="url" type="text" inputmode="url" autocomplete="url" placeholder="votresite.ca" required>
+<button class="btn btn-orange" type="submit">Analyser mon site <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></button>
+</form>
+<p class="audit-note">Gratuit · Résultat en quelques secondes · Données Google Ads officielles, Québec, français et anglais</p>
+<p id="audit-error" class="audit-error" role="alert" hidden></p>
+</div>
+</div>
+</section>
+
+<section id="audit-progress" class="sec sec-white audit-panel" hidden aria-live="polite">
+<div class="container">
+<div class="progress-box">
+<span class="eyebrow">Analyse en cours · <span id="p-site"></span></span>
+<ol class="steps">
+<li>Lecture de votre site et de votre métier</li>
+<li>Recherches Google liées à votre métier</li>
+<li>Volumes, coût par clic et concurrence au Québec</li>
+<li>Concurrents, régions et appareils</li>
+<li>Prévisions de budget Google Ads</li>
+<li>Montage de votre tableau de bord</li>
+</ol>
+<div class="pbar"><i id="pbar-fill"></i></div>
+</div>
+</div>
+</section>
+
+<section id="audit-result" class="sec sec-white audit-panel" hidden>
+<div class="container">
+<div class="sec-head"><div class="stack"><span class="eyebrow">Tableau de bord · <span id="r-site"></span> · Québec</span><h2 class="display h2-sm" id="r-title">Votre potentiel Google Ads</h2></div></div>
+
+<div class="metier-bar">
+<span class="eyebrow">Métier analysé</span>
+<div id="r-metier" class="metier-chips"></div>
+<button type="button" class="metier-edit" id="metier-edit">Ce n'est pas votre métier ? Corrigez-le</button>
+<form id="metier-form" class="metier-form" hidden>
+<label class="sr-only" for="metier-input">Vos services, séparés par des virgules</label>
+<input id="metier-input" type="text" placeholder="ex. évaluation environnementale, décontamination des sols" maxlength="300">
+<button class="btn btn-dark btn-sm" type="submit">Relancer l'analyse</button>
+<p class="audit-note">Écrivez vos services comme vos clients les cherchent, séparés par des virgules.</p>
+</form>
+</div>
+
+<div class="dash-top">
+<div class="kpi-grid">
+<div class="card kpi-card"><span class="eyebrow">Recherches par mois</span><b id="r-vol">–</b><p id="r-vol-sub">sur les mots-clés de votre secteur au Québec</p></div>
+<div class="card kpi-card"><span class="eyebrow">Coût moyen d'un clic</span><b id="r-cpc">–</b><p>en haut de page, pondéré par le volume</p></div>
+<div class="card kpi-card"><span class="eyebrow">Concurrence</span><b id="r-comp">–</b><p id="r-comp-sub">annonceurs sur ces recherches</p></div>
+<div class="card kpi-card kpi-accent"><span class="eyebrow">Clics possibles par mois</span><b id="r-clics">–</b><p id="r-clics-sub">avec le budget conseillé</p></div>
+</div>
+</div>
+
+<div class="dash-head"><span class="eyebrow">01 · Vos mots-clés</span><h3 class="dash-h">Les 10 recherches principales liées à vos services</h3></div>
+<div class="card chart-card top-kw"><div id="c-topkw" class="chart"></div><p class="chart-note" id="c-topkw-note"></p></div>
+
+<div class="dash-head"><span class="eyebrow">02 · Le marché</span></div>
+<div class="dash-grid">
+<div class="card chart-card dash-wide">
+<div class="chart-head"><div><span class="eyebrow">Saisonnalité</span><h4>Recherches par mois sur 12 mois</h4></div><p class="chart-note" id="r-season-note"></p></div>
+<div id="c-season" class="chart chart-bars" role="img"></div>
+</div>
+<div class="card chart-card dash-wide"><span class="eyebrow">Concurrents</span><h4>Recherches mensuelles sur leur nom, et le vôtre</h4><div id="c-rivaux" class="chart"></div><p class="chart-note" id="c-rivaux-note"></p></div>
+</div>
+
+<div class="dash-head"><span class="eyebrow">03 · Budget</span><h3 class="dash-h">Ce que votre budget vous rapporterait</h3></div>
+<div id="r-scen" class="scen-grid"></div>
+<p class="audit-note" id="r-scen-note"></p>
+
+<div class="dash-head"><span class="eyebrow">04 · Le détail</span><h3 class="dash-h">Mots-clés, concurrents, régions, opportunités</h3></div>
+<div class="insight-grid">
+<div class="card insight insight-wide">
+<span class="eyebrow">Mots-clés principaux</span>
+<h3 id="r-hook">Ce que vos clients tapent sur Google</h3>
+<div class="table-wrap"><table class="kw-table"><thead><tr><th>Mot-clé</th><th>Recherches/mois</th><th>Coût par clic</th><th>Concurrence</th></tr></thead><tbody id="r-kw"></tbody></table></div>
+</div>
+<div class="card card-dark insight">
+<span class="eyebrow">Concurrents</span>
+<h3 id="r-comp-title">Qui capte les recherches</h3>
+<ol id="r-comp-list" class="rank-list rank-dark"></ol>
+<p class="insight-note" id="r-comp-note"></p>
+</div>
+<div class="card insight">
+<span class="eyebrow">Régions</span>
+<h3>Où vos clients cherchent</h3>
+<ol id="r-reg" class="rank-list"></ol>
+</div>
+<div class="card insight insight-wide">
+<span class="eyebrow">Opportunités</span>
+<h3>Recherches peu disputées à saisir</h3>
+<ol id="r-opp" class="rank-list rank-2col"></ol>
+</div>
+</div>
+
+<div class="card card-dark unlock" id="unlock">
+<div class="unlock-text"><h3>Débloquez le rapport complet</h3><p>Tous les mots-clés, concurrents, régions et opportunités, et les 3 scénarios de budget.</p></div>
+<form id="lead-form" name="audit-google-ads" method="POST" data-netlify="true" netlify-honeypot="bot-field" class="unlock-form">
+<input type="hidden" name="form-name" value="audit-google-ads">
+<p hidden><label>Ne pas remplir <input name="bot-field"></label></p>
+<input type="hidden" name="site"><input type="hidden" name="score"><input type="hidden" name="recherches"><input type="hidden" name="cpc"><input type="hidden" name="concurrence"><input type="hidden" name="metier">
+<label class="sr-only" for="lead-email">Votre courriel</label>
+<input id="lead-email" name="courriel" type="email" autocomplete="email" placeholder="votre@courriel.ca" required>
+<button class="btn btn-orange" type="submit">Débloquer</button>
+<p class="unlock-legal">En envoyant votre courriel, vous acceptez qu'Expert 360 vous contacte au sujet de cette analyse. <a href="/confidentialite">Confidentialité</a></p>
+<p id="lead-error" class="audit-error" role="alert" hidden></p>
+</form>
+</div>
+
+<div id="report" class="report" hidden>
+<div class="card card-dark cta-card">
+<div><h3>Transformer ce potentiel en demandes ?</h3><p id="r-brand"></p><p>On regarde ensemble votre compte Google Ads et votre site, et on vous dit honnêtement ce qui rapporterait le plus. 30 minutes, sans engagement.</p></div>
+<a class="btn btn-orange" href="https://calendly.com/lamri-l8ih/30min" target="_blank" rel="noopener">Réserver un appel <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a>
+</div>
+</div>
+<p class="audit-note">Sources : Google Ads Keyword Planner (moyenne des 12 derniers mois, Québec, recherches en français et, si le site a une version anglaise, en anglais) et prévisions Google Ads pour les scénarios de budget. Les concurrents sont les marques que Google repère dans les recherches de votre secteur. L'analyse du site porte sur sa page d'accueil. Les chiffres sont des estimations.</p>
+<button class="btn btn-orange unlock-fab" type="button" id="unlock-fab" hidden>🔒 Débloquer le rapport complet</button>
+<button class="btn btn-outline btn-sm" type="button" id="restart">Analyser un autre site</button>
+</div>
+</section>
+
+<section class="sec">
+<div class="container">
+<div class="sec-head"><div class="stack"><span class="eyebrow">Comment lire le score</span><h2 class="display h2-sm">Trois facteurs, <span class="accent">un seul chiffre.</span></h2></div></div>
+<div class="grid-3">
+<div class="card card-muted"><span class="num">45 pts</span><h3>Le volume</h3><p>Combien de personnes cherchent vos services chaque mois au Québec.</p></div>
+<div class="card card-muted"><span class="num">30 pts</span><h3>La valeur du clic</h3><p>Un coût par clic élevé signale des recherches commerciales, prêtes à acheter.</p></div>
+<div class="card card-muted"><span class="num">25 pts</span><h3>La concurrence</h3><p>Moins il y a d'annonceurs, plus il est facile de se démarquer.</p></div>
+</div>
+</div>
+</section>
+</main>
+<footer class="site-footer">
+<div class="container">
+<div class="foot-grid">
+<div class="col"><img src="/logo-expert-360.png" alt="Expert 360" width="176" height="36" style="height:36px;width:auto"><p>Des experts en acquisition, CRM, data et IA, à votre service, pour les PME québécoises.</p></div>
+<div class="col"><span class="eyebrow">Services</span><a href="/email-sms">Email & SMS marketing</a><a href="/acquisition-ppc">Acquisition PPC</a><a href="/audit-google-ads" style="font-weight:700">Audit Google Ads gratuit</a><a href="/design-ux">Design UI / UX</a><a href="/crm-data-parcours">CRM, data & parcours client</a><a href="/integration-ia">Intégration IA</a></div>
+<div class="col"><span class="eyebrow">Expert 360</span><a href="/#approche">Approche</a><a href="/#realisations">Réalisations</a><a href="https://calendly.com/lamri-l8ih/30min" target="_blank" rel="noopener">Réserver un appel</a><a href="/confidentialite">Confidentialité</a></div>
+<div class="col"><span class="eyebrow">Contact</span><span>Montréal, QC</span><a href="tel:+14389898811">438 989-8811</a><a href="mailto:web@expert-360.ca">web@expert-360.ca</a><a href="https://wa.me/14389898811" target="_blank" rel="noopener">WhatsApp</a><a href="https://www.linkedin.com/company/expert360/" target="_blank" rel="noopener">LinkedIn</a></div>
+</div>
+<div class="foot-bottom"><span>© 2026 Expert 360</span><a href="/confidentialite">Politique de confidentialité · Loi 25</a></div>
+</div>
+</footer>
+<script src="/site.js" defer></script>
+<script src="/audit.js?v=13" defer></script>
+</body>
+</html>
