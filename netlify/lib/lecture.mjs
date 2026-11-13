@@ -156,7 +156,7 @@ export function extraireMetier(html, host, pagesServices = []) {
 }
 
 // Recherches qui ne mènent jamais à un client (emploi, études, météo…) : exclues comme des mots-clés négatifs.
-export const NEGATIFS = /\b(emploi|emplois|job|jobs|salaire|salaires|stage|stages|carriere|carrieres|offre d emploi|cours|formation|formations|universite|cegep|etudes|etudiant|diplome|meteo|wikipedia|definition|synonyme|pdf|memoire|these|examen|quiz|gratuit en ligne|youtube|reddit|kijiji|marketplace|indeed|jobboom|recrutement|benevolat|bourse)\b/;
+export const NEGATIFS = /\b(emploi|emplois|job|jobs|salaire|salaires|stage|stages|carriere|carrieres|offre d emploi|cours|formation|formations|universite|cegep|etudes|etudiant|diplome|meteo|wikipedia|definition|synonyme|pdf|memoire|these|examen|quiz|gratuit en ligne|youtube|reddit|kijiji|marketplace|indeed|jobboom|recrutement|benevolat|bourse|salary|hiring|career|careers|course|courses|training|weather|meaning|free download)\b/;
 
 // Liens vers les pages qui décrivent les services (« Expertise », « Services », « Solutions »…), au plus 2.
 const PAGE_SERVICES = /(expertises?|services?|solutions?|prestations|offres?|competences|domaines|savoir-faire|what-we-do|our-services)/i;
@@ -175,4 +175,23 @@ export function liensServices(html, base) {
     if (!out.some((x) => x.href === href)) out.push({ href, niveau });
   }
   return out.sort((a, b) => a.niveau - b.niveau).slice(0, 2).map((x) => x.href);
+}
+
+// Version anglaise du site : balise hreflang, ou lien « EN » / « English » dans l'en-tête.
+export function lienAnglais(html, base) {
+  const alt = html.match(/<link[^>]+hreflang\s*=\s*["']en(?:-[a-z]+)?["'][^>]*href\s*=\s*["']([^"']+)["']/i) ||
+    html.match(/<link[^>]+href\s*=\s*["']([^"']+)["'][^>]*hreflang\s*=\s*["']en(?:-[a-z]+)?["']/i);
+  const tests = [];
+  if (alt) tests.push(alt[1]);
+  for (const m of html.matchAll(/<a[^>]+href\s*=\s*["']([^"'#]+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
+    const t = norm(decode(m[2])).trim();
+    if (/^(en|english|anglais|eng)$/.test(t) || /^\/en(\/|$)/.test(m[1])) tests.push(m[1]);
+  }
+  for (const h of tests) {
+    try {
+      const u = new URL(h, base);
+      if (u.hostname.replace(/^www\./, "").split(".").slice(-2).join(".") === base.hostname.replace(/^www\./, "").split(".").slice(-2).join(".")) return u.href;
+    } catch {}
+  }
+  return null;
 }

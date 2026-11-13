@@ -178,6 +178,7 @@ tr.locked td{filter:blur(5px)}
 .hbar .track{height:14px;border-radius:7px;background:var(--chip);overflow:hidden}
 .hbar .track i{display:block;height:100%;border-radius:7px;background:var(--blue)}
 .top-kw .hbar{grid-template-columns:minmax(0,260px) minmax(0,1fr) 64px 96px}
+.lang-tag{display:inline-block;margin-left:8px;font-family:var(--mono);font-size:10px;font-weight:600;padding:1px 6px;border-radius:4px;background:var(--chip);color:var(--muted);vertical-align:middle}
 .top-kw .kw-comp{display:flex;justify-content:flex-end}
 .top-kw .hbar-head span{height:auto!important;background:none!important;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .top-kw .hbar-head span:nth-child(3),.top-kw .hbar-head span:nth-child(4){text-align:right}
@@ -277,7 +278,7 @@ tr.locked td{filter:blur(5px)}
 
 <section id="audit-result" class="sec sec-white audit-panel" hidden>
 <div class="container">
-<div class="sec-head"><div class="stack"><span class="eyebrow">Tableau de bord · <span id="r-site"></span> · Québec, français</span><h2 class="display h2-sm" id="r-title">Votre potentiel Google Ads</h2></div></div>
+<div class="sec-head"><div class="stack"><span class="eyebrow">Tableau de bord · <span id="r-site"></span> · Québec</span><h2 class="display h2-sm" id="r-title">Votre potentiel Google Ads</h2></div></div>
 
 <div class="metier-bar">
 <span class="eyebrow">Métier analysé</span>
@@ -293,7 +294,7 @@ tr.locked td{filter:blur(5px)}
 
 <div class="dash-top">
 <div class="kpi-grid">
-<div class="card kpi-card"><span class="eyebrow">Recherches par mois</span><b id="r-vol">–</b><p>sur les mots-clés de votre secteur au Québec</p></div>
+<div class="card kpi-card"><span class="eyebrow">Recherches par mois</span><b id="r-vol">–</b><p id="r-vol-sub">sur les mots-clés de votre secteur au Québec</p></div>
 <div class="card kpi-card"><span class="eyebrow">Coût moyen d'un clic</span><b id="r-cpc">–</b><p>en haut de page, pondéré par le volume</p></div>
 <div class="card kpi-card"><span class="eyebrow">Concurrence</span><b id="r-comp">–</b><p id="r-comp-sub">annonceurs sur ces recherches</p></div>
 <div class="card kpi-card kpi-accent"><span class="eyebrow">Clics possibles par mois</span><b id="r-clics">–</b><p id="r-clics-sub">avec le budget conseillé</p></div>
@@ -301,7 +302,7 @@ tr.locked td{filter:blur(5px)}
 </div>
 
 <div class="dash-head"><span class="eyebrow">01 · Vos mots-clés</span><h3 class="dash-h">Les 10 recherches principales liées à vos services</h3></div>
-<div class="card chart-card top-kw"><div id="c-topkw" class="chart"></div><p class="chart-note">Recherches mensuelles moyennes sur Google, au Québec, en français.</p></div>
+<div class="card chart-card top-kw"><div id="c-topkw" class="chart"></div><p class="chart-note" id="c-topkw-note"></p></div>
 
 <div class="dash-head"><span class="eyebrow">02 · Le marché</span></div>
 <div class="dash-grid">
@@ -361,7 +362,7 @@ tr.locked td{filter:blur(5px)}
 <a class="btn btn-orange" href="https://calendly.com/lamri-l8ih/30min" target="_blank" rel="noopener">Réserver un appel <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a>
 </div>
 </div>
-<p class="audit-note">Sources : Google Ads Keyword Planner (moyenne des 12 derniers mois, Québec, recherches en français) et prévisions Google Ads pour les scénarios de budget. Les concurrents sont les marques que Google repère dans les recherches de votre secteur. L'analyse du site porte sur sa page d'accueil. Les chiffres sont des estimations.</p>
+<p class="audit-note">Sources : Google Ads Keyword Planner (moyenne des 12 derniers mois, Québec, recherches en français et, si le site a une version anglaise, en anglais) et prévisions Google Ads pour les scénarios de budget. Les concurrents sont les marques que Google repère dans les recherches de votre secteur. L'analyse du site porte sur sa page d'accueil. Les chiffres sont des estimations.</p>
 <button class="btn btn-orange unlock-fab" type="button" id="unlock-fab" hidden>🔒 Débloquer le rapport complet</button>
 <button class="btn btn-outline btn-sm" type="button" id="restart">Analyser un autre site</button>
 </div>
@@ -390,6 +391,6 @@ tr.locked td{filter:blur(5px)}
 </div>
 </footer>
 <script src="/site.js" defer></script>
-<script src="/audit.js?v=12" defer></script>
+<script src="/audit.js?v=13" defer></script>
 </body>
 </html>

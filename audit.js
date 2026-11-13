@@ -188,7 +188,8 @@
       var row = el('div', 'hbar'), track = el('span', 'track'), bar = el('i');
       bar.style.width = Math.max(2, Math.round((k.volume / max) * 100)) + '%';
       track.appendChild(bar);
-      row.appendChild(el('em', '', k.mot)); row.appendChild(track); row.appendChild(el('b', '', nf.format(k.volume)));
+      var nom = el('em', '', k.mot); if (k.langue === 'en') { var t = el('small', 'lang-tag', 'EN'); nom.appendChild(t); }
+      row.appendChild(nom); row.appendChild(track); row.appendChild(el('b', '', nf.format(k.volume)));
       var bg = badge(k.concurrence); if (k.concurrence === 'Élevée') bg.textContent = 'Forte';
       var c = el('span', 'kw-comp'); c.appendChild(bg); row.appendChild(c);
       wrap.appendChild(row);
@@ -314,6 +315,11 @@
     $('r-site').textContent = data.site;
     $('r-title').textContent = 'Le marché de votre secteur : ' + data.site;
     $('r-vol').textContent = nf.format(a.recherchesMois);
+    var lg = a.langues || {};
+    $('r-vol-sub').textContent = lg.en ? 'français ' + nf.format(lg.fr) + ' · anglais ' + nf.format(lg.en) : 'sur les mots-clés de votre secteur au Québec';
+    $('c-topkw-note').textContent = lg.en
+      ? 'Recherches mensuelles moyennes sur Google au Québec, en français et en anglais (EN).'
+      : 'Recherches mensuelles moyennes sur Google au Québec. Aucune version anglaise du site trouvée : le marché anglophone n’est pas inclus.';
     $('r-cpc').textContent = money(a.cpcMoyen);
     $('r-comp').textContent = a.concurrence;
     $('r-comp-sub').textContent = 'indice ' + a.concurrenceIndice + ' / 100 sur ces recherches';

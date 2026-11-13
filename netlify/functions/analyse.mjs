@@ -3,11 +3,12 @@
 // Renvoie : score de potentiel, volumes, CPC, concurrence, saisonnalité, mots-clés.
 // Les identifiants viennent des variables d'environnement Netlify (jamais du code).
 
-import { lirePage, extraireMetier, liensServices, NEGATIFS, MOTS_LARGES, parseSite as parseUrl } from "../lib/lecture.mjs";
+import { lirePage, extraireMetier, liensServices, lienAnglais, NEGATIFS, MOTS_LARGES, parseSite as parseUrl } from "../lib/lecture.mjs";
 
 const API = "https://googleads.googleapis.com/v24";
 const GEO_QUEBEC = "geoTargetConstants/20123";
 const LANG_FR = "languageConstants/1002";
+const LANG_EN = "languageConstants/1000";
 const MOIS = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
 const MONTH_INDEX = { JANUARY: 0, FEBRUARY: 1, MARCH: 2, APRIL: 3, MAY: 4, JUNE: 5, JULY: 6, AUGUST: 7, SEPTEMBER: 8, OCTOBER: 9, NOVEMBER: 10, DECEMBER: 11 };
 
@@ -46,7 +47,7 @@ async function getAccessToken() {
   return (await r.json()).access_token;
 }
 
-async function keywordIdeas(token, seed) {
+async function keywordIdeas(token, seed, lang = LANG_FR) {
   const cid = process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID;
   const r = await fetch(`${API}/customers/${cid}:generateKeywordIdeas`, {
     method: "POST",
@@ -56,7 +57,7 @@ async function keywordIdeas(token, seed) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      language: LANG_FR,
+      language: lang,
       geoTargetConstants: [GEO_QUEBEC],
       keywordPlanNetwork: "GOOGLE_SEARCH",
       includeAdultKeywords: false,
@@ -72,7 +73,7 @@ async function keywordIdeas(token, seed) {
   return (await r.json()).results || [];
 }
 
-function toIdea(res) {
+function toIdea(res, lang = "fr") {
   const m = res.keywordIdeaMetrics || {};
   const months = new Array(12).fill(null);
   for (const v of m.monthlySearchVolumes || []) {
@@ -81,6 +82,7 @@ function toIdea(res) {
   }
   return {
     keyword: res.text,
+    lang,
     volume: Number(m.avgMonthlySearches || 0),
     compIndex: m.competitionIndex !== undefined ? Number(m.competitionIndex) : null,
     competition: m.competition || "UNSPECIFIED",
@@ -165,7 +167,7 @@ async function volumesParVille(token, keywords) {
     const r = await fetch(`${API}/customers/${cid}:generateKeywordHistoricalMetrics`, {
       method: "POST",
       headers: adsHeaders(token),
-      body: JSON.stringify({ keywords, language: LANG_FR, geoTargetConstants: [v.geo], keywordPlanNetwork: "GOOGLE_SEARCH" }),
+      body: JSON.stringify({ keywords, geoTargetConstants: [v.geo], keywordPlanNetwork: "GOOGLE_SEARCH" }),
     });
     if (!r.ok) throw new Error("hist:" + r.status);
     const j = await r.json();
@@ -184,7 +186,7 @@ async function appareils(token, keywords) {
     method: "POST",
     headers: adsHeaders(token),
     body: JSON.stringify({
-      keywords, language: LANG_FR, geoTargetConstants: [GEO_QUEBEC], keywordPlanNetwork: "GOOGLE_SEARCH",
+      keywords, geoTargetConstants: [GEO_QUEBEC], keywordPlanNetwork: "GOOGLE_SEARCH",
       aggregateMetrics: { aggregateMetricTypes: ["DEVICE"] },
     }),
   });
@@ -210,7 +212,7 @@ async function prevision(token, keywords, budgetMois) {
       currencyCode: "CAD",
       forecastPeriod: { startDate: d(1), endDate: d(30) },
       campaign: {
-        languageConstants: [LANG_FR],
+        languageConstants: [LANG_FR, LANG_EN],
         geoModifiers: [{ geoTargetConstant: GEO_QUEBEC }],
         keywordPlanNetwork: "GOOGLE_SEARCH",
         biddingStrategy: { maximizeClicksBiddingStrategy: { dailyTargetSpendMicros: String(Math.round((budgetMois / 30) * 1e6)) } },
@@ -284,7 +286,7 @@ export default async (req) => {
   // Pages lues : l'accueil, puis les pages « Expertise » / « Services » trouvées dans le menu,
   // ou à défaut aux adresses courantes (/expertise, /services…).
   const CHEMINS = ["/expertise", "/expertises", "/services", "/nos-services", "/solutions"];
-  const lecture = precise.length ? Promise.resolve({ metier: precise, pagesServices: [], faible: false })
+  const lecture = precise.length ? lirePage(new URL(parseUrl(site.url).origin + "/"), 4000).then((p) => ({ metier: precise, pagesServices: [], faible: false, enUrl: lienAnglais(p.html, p.final) })).catch(() => ({ metier: precise, pagesServices: [], faible: false, enUrl: null }))
     : lirePage(new URL(parseUrl(site.url).origin + "/"), 5000).then(async (p) => {
       let liens = liensServices(p.html, p.final);
       if (!liens.length) liens = CHEMINS.map((c) => p.final.origin + c);
@@ -293,13 +295,13 @@ export default async (req) => {
       const metierLu = extraireMetier(p.html, site.host, lues.map((x) => x.html));
       // Site construit en JavaScript : les titres des services ne sont pas dans le code reçu.
       const titres = lues.reduce((t, x) => t + (x.html.match(/<h[2-4][\s>]/gi) || []).length, 0);
-      return { metier: metierLu, pagesServices: lues.map((x) => x.url), faible: metierLu.length < 5 || (lues.length > 0 && titres < 3) };
+      return { metier: metierLu, pagesServices: lues.map((x) => x.url), faible: metierLu.length < 5 || (lues.length > 0 && titres < 3), enUrl: lienAnglais(p.html, p.final) };
     }).catch((e) => {
       console.error("analyse:lecture", site.host, String(e.message || e));
-      return { metier: [], pagesServices: [], faible: true };
+      return { metier: [], pagesServices: [], faible: true, enUrl: null };
     });
 
-  let raw, token, metier = [];
+  let raw, token, metier = [], rawEn = [];
   try {
     let lu;
     [token, lu] = await Promise.all([getAccessToken(), lecture]);
@@ -357,19 +359,32 @@ export default async (req) => {
         console.error("analyse:seed2", site.host, String(e.message || e));
       }
     }
+    // 4. Le marché anglophone : Google lit la version anglaise du site, si elle existe.
+    if (lu.enUrl) {
+      try {
+        rawEn = await keywordIdeas(token, { urlSeed: { url: lu.enUrl } }, LANG_EN);
+      } catch (e) {
+        console.error("analyse:anglais", site.host, String(e.message || e));
+      }
+    }
   } catch (e) {
     console.error("analyse", site.host, String(e.message || e));
     return json({ error: "L'analyse est momentanément indisponible. Réessayez dans quelques minutes." }, 502);
   }
 
   const neg = (k) => NEGATIFS.test(" " + norm(k.keyword).replace(/[^a-z0-9]+/g, " ") + " ");
-  const all = dedupe(raw.map(toIdea).filter((k) => k.keyword && k.volume > 0 && !neg(k)));
+  const knownFr = new Set(raw.map((r) => r.text));
+  const all = dedupe(raw.map((r) => toIdea(r, "fr")).concat(rawEn.filter((r) => !knownFr.has(r.text)).map((r) => toIdea(r, "en")))
+    .filter((k) => k.keyword && k.volume > 0 && !neg(k)));
   const rac = metier.length ? racines(metier) : null;
   // Recherche liée au métier : contient un mot porteur du métier (pas seulement un qualificatif).
   // Si le filtre est trop strict pour ce site (moins de 15 recherches), on le relâche.
-  let duMetier = (k) => !rac || pertinent(k.keyword, rac).fort;
-  if (rac && all.filter(duMetier).length < 15) duMetier = (k) => { const p = pertinent(k.keyword, rac); return p.fort || p.faible; };
-  if (rac && all.filter(duMetier).length < 15) duMetier = () => true;
+  let filtreFr = (k) => !rac || pertinent(k.keyword, rac).fort;
+  const frs = all.filter((k) => k.lang === "fr");
+  if (rac && frs.filter(filtreFr).length < 15) filtreFr = (k) => { const p = pertinent(k.keyword, rac); return p.fort || p.faible; };
+  if (rac && frs.filter(filtreFr).length < 15) filtreFr = () => true;
+  // Les recherches anglaises viennent de la page anglaise du site : Google les a déjà liées au métier.
+  const duMetier = (k) => k.lang === "en" || filtreFr(k);
   if (all.length === 0) {
     return json({ site: site.host, empty: true, message: "Pas assez de données de recherche au Québec pour ce site." });
   }
@@ -468,6 +483,7 @@ export default async (req) => {
 
   const fmtK = (k) => ({
     mot: k.keyword,
+    langue: k.lang,
     volume: k.volume,
     cpcBas: k.low !== null ? round(k.low) : null,
     cpcHaut: k.high !== null ? round(k.high) : null,
@@ -527,6 +543,7 @@ export default async (req) => {
       score,
       scoreLabel,
       recherchesMois: totalVolume,
+      langues: { fr: top.filter((k) => k.lang === "fr").reduce((t, k) => t + k.volume, 0), en: top.filter((k) => k.lang === "en").reduce((t, k) => t + k.volume, 0) },
       cpcMoyen: round(cpc),
       concurrence: compLabel(comp),
       concurrenceIndice: Math.round(comp),
