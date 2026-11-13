@@ -183,11 +183,14 @@
     if (!rows.length) { box.appendChild(el('p', 'chart-empty', 'Pas assez de recherches pour ce métier.')); return; }
     var max = Math.max.apply(null, rows.map(function (k) { return k.volume; })) || 1;
     var wrap = el('div', 'hbars');
+    var head = el('div', 'hbar hbar-head'); ['Recherche', '', 'Par mois', 'Concurrence'].forEach(function (t) { head.appendChild(el('span', '', t)); }); wrap.appendChild(head);
     rows.forEach(function (k) {
       var row = el('div', 'hbar'), track = el('span', 'track'), bar = el('i');
       bar.style.width = Math.max(2, Math.round((k.volume / max) * 100)) + '%';
       track.appendChild(bar);
       row.appendChild(el('em', '', k.mot)); row.appendChild(track); row.appendChild(el('b', '', nf.format(k.volume)));
+      var bg = badge(k.concurrence); if (k.concurrence === 'Élevée') bg.textContent = 'Forte';
+      var c = el('span', 'kw-comp'); c.appendChild(bg); row.appendChild(c);
       wrap.appendChild(row);
     });
     box.appendChild(wrap);

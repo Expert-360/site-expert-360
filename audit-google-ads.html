@@ -177,8 +177,11 @@ tr.locked td{filter:blur(5px)}
 .hbar em{font-style:normal;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hbar .track{height:14px;border-radius:7px;background:var(--chip);overflow:hidden}
 .hbar .track i{display:block;height:100%;border-radius:7px;background:var(--blue)}
-.top-kw .hbar{grid-template-columns:minmax(0,260px) minmax(0,1fr) 64px}
-@media (max-width:600px){.top-kw .hbar{grid-template-columns:minmax(0,150px) minmax(0,1fr) 52px}}
+.top-kw .hbar{grid-template-columns:minmax(0,260px) minmax(0,1fr) 64px 96px}
+.top-kw .kw-comp{display:flex;justify-content:flex-end}
+.top-kw .hbar-head span{height:auto!important;background:none!important;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.top-kw .hbar-head span:nth-child(3),.top-kw .hbar-head span:nth-child(4){text-align:right}
+@media (max-width:600px){.top-kw .hbar{grid-template-columns:minmax(0,1fr) 48px 78px}.top-kw .hbar .track,.top-kw .hbar-head span:nth-child(2){display:none}}
 .hbar.me em{font-weight:700}.hbar.me .track i{background:var(--orange)}
 .hbar b{font-family:var(--mono);font-size:13px;font-weight:500;text-align:right}
 .chart-empty{color:var(--muted);font-size:15px}
@@ -387,6 +390,6 @@ tr.locked td{filter:blur(5px)}
 </div>
 </footer>
 <script src="/site.js" defer></script>
-<script src="/audit.js?v=11" defer></script>
+<script src="/audit.js?v=12" defer></script>
 </body>
 </html>
