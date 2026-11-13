@@ -176,6 +176,25 @@
     box.appendChild(wrap);
   }
 
+  // Concurrents : recherches sur leur nom (3 premiers) face à celles sur le nom du prospect.
+  function renderRivaux(r) {
+    var box = $('c-rivaux'); box.innerHTML = '';
+    var rows = (r.concurrents || []).slice(0, 3).map(function (c) { return { nom: c.nom, v: c.recherches }; });
+    if (!rows.length) { box.appendChild(el('p', 'chart-empty', 'Aucun concurrent ne s’impose par son nom dans vos recherches : le terrain est libre.')); $('c-rivaux-note').textContent = ''; return; }
+    rows.push({ nom: 'Vous (' + data.site + ')', v: r.recherchesMarque || 0, me: true });
+    var max = Math.max.apply(null, rows.map(function (x) { return x.v; })) || 1;
+    var wrap = el('div', 'hbars');
+    rows.forEach(function (x) {
+      var row = el('div', 'hbar' + (x.me ? ' me' : '')), track = el('span', 'track'), bar = el('i');
+      bar.style.width = Math.max(2, Math.round((x.v / max) * 100)) + '%';
+      track.appendChild(bar);
+      row.appendChild(el('em', '', x.nom)); row.appendChild(track); row.appendChild(el('b', '', nf.format(x.v)));
+      wrap.appendChild(row);
+    });
+    box.appendChild(wrap);
+    $('c-rivaux-note').textContent = 'Plus une marque est cherchée par son nom, plus elle capte de clics sans payer. La liste complète est dans le rapport.';
+  }
+
   // ---------- Blocs verrouillés ----------
 
   function lockTag(n, label) {
@@ -283,8 +302,7 @@
     $('r-season-note').textContent = 'Pic en ' + r.moisFort.replace(/\.$/, '') + ', creux en ' + r.moisFaible.replace(/\.$/, '') + '. Le budget doit suivre cette courbe.';
     var intents = gr.intentions || [];
     donut($('c-intent'), intents, intents.length ? intents[0].part + ' %' : '', intents.length ? 'principale' : '');
-    var CC = { 'Faible': '#3FA66A', 'Moyenne': '#FEB412', 'Élevée': '#FA7119' };
-    donut($('c-comp'), (gr.concurrence || []).map(function (c) { return { nom: c.nom, part: c.part, color: CC[c.nom] }; }), String(a.concurrenceIndice), 'indice /100');
+    renderRivaux(r);
 
     renderScenarios(data.scenarios || []);
     renderKeywords(r.motsCles);

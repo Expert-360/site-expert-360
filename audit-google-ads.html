@@ -173,10 +173,11 @@ tr.locked td{filter:blur(5px)}
 .legend i{width:12px;height:12px;border-radius:3px}
 .legend b{font-family:var(--mono);font-size:13px;font-weight:500}
 .hbars{display:grid;gap:12px}
-.hbar{display:grid;grid-template-columns:110px minmax(0,1fr) 44px;gap:10px;align-items:center;font-size:14px}
-.hbar em{font-style:normal}
+.hbar{display:grid;grid-template-columns:150px minmax(0,1fr) 56px;gap:10px;align-items:center;font-size:14px}
+.hbar em{font-style:normal;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hbar .track{height:14px;border-radius:7px;background:var(--chip);overflow:hidden}
 .hbar .track i{display:block;height:100%;border-radius:7px;background:var(--blue)}
+.hbar.me em{font-weight:700}.hbar.me .track i{background:var(--orange)}
 .hbar b{font-family:var(--mono);font-size:13px;font-weight:500;text-align:right}
 .chart-empty{color:var(--muted);font-size:15px}
 .site-card{display:grid !important;grid-template-columns:minmax(0,280px) minmax(0,1fr);gap:28px !important;align-items:start}
@@ -209,7 +210,7 @@ tr.locked td{filter:blur(5px)}
 .rank-2col .lock-line,.rank-2col .more-row{grid-column:1/-1}
 .check-list .lock-line{display:flex;grid-template-columns:none;border-bottom:0}
 @media (max-width:980px){.dash-top,.site-card{grid-template-columns:1fr}.dash-grid{grid-template-columns:1fr}.scen-grid{grid-template-columns:1fr}.rank-2col{grid-template-columns:1fr}}
-@media (max-width:600px){.kpi-grid{grid-template-columns:1fr 1fr;gap:12px}.kpi-card{padding:16px 18px !important}.kpi-card b{font-size:26px}.kpi-card p{font-size:12.5px !important}.donut-wrap{grid-template-columns:1fr;justify-items:center}.legend{width:100%}.hbar{grid-template-columns:88px minmax(0,1fr) 40px;font-size:13px}}
+@media (max-width:600px){.kpi-grid{grid-template-columns:1fr 1fr;gap:12px}.kpi-card{padding:16px 18px !important}.kpi-card b{font-size:26px}.kpi-card p{font-size:12.5px !important}.donut-wrap{grid-template-columns:1fr;justify-items:center}.legend{width:100%}.hbar{grid-template-columns:110px minmax(0,1fr) 48px;font-size:13px}}
 .scen .inner{display:grid;gap:10px}
 .check-msg{display:block !important;color:var(--muted)}
 </style>
@@ -301,7 +302,7 @@ tr.locked td{filter:blur(5px)}
 <div id="c-season" class="chart chart-bars" role="img"></div>
 </div>
 <div class="card chart-card"><span class="eyebrow">Intention de recherche</span><h4>Pourquoi ils cherchent</h4><div id="c-intent" class="chart chart-donut"></div></div>
-<div class="card chart-card"><span class="eyebrow">Concurrence</span><h4>Part des recherches par niveau</h4><div id="c-comp" class="chart chart-donut"></div></div>
+<div class="card chart-card"><span class="eyebrow">Concurrents</span><h4>Recherches mensuelles sur leur nom, et le vôtre</h4><div id="c-rivaux" class="chart"></div><p class="chart-note" id="c-rivaux-note"></p></div>
 </div>
 
 <div class="dash-head"><span class="eyebrow">02 · Budget</span><h3 class="dash-h">Ce que votre budget vous rapporterait</h3></div>
@@ -382,6 +383,6 @@ tr.locked td{filter:blur(5px)}
 </div>
 </footer>
 <script src="/site.js" defer></script>
-<script src="/audit.js?v=8" defer></script>
+<script src="/audit.js?v=9" defer></script>
 </body>
 </html>
