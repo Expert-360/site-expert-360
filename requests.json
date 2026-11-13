@@ -1,6 +1,6 @@
 [
- {"id":"0-lecture-auto","url":"apecq.org"},
- {"id":"1-licence-rbq","url":"apecq.org","metier":"formation licence rbq, cours licence rbq, licence entrepreneur général, licence entrepreneur spécialisé, examen rbq, devenir entrepreneur général, cours rbq en ligne, formation rbq"},
- {"id":"2-formation-continue","url":"apecq.org","metier":"formation continue rbq, formation continue obligatoire, formation sst construction, formation prévention des chutes, formation silice, formation simdut, formation paie ccq, formation continue entrepreneur"},
- {"id":"3-adhesion-services","url":"apecq.org","metier":"association entrepreneurs construction, association patronale construction, cautionnement licence rbq, démarrer entreprise construction, mutuelle de prévention construction, plan de garantie condo"}
+ {"id":"A-licence","url":"apecq.example","metier":"formation licence rbq, cours licence rbq, licence rbq, examen rbq, licence entrepreneur général, licence entrepreneur spécialisé, cours rbq en ligne, devenir entrepreneur construction"},
+ {"id":"B-fco","url":"apecq.example","metier":"formation continue rbq, formation continue obligatoire rbq, fco rbq, formation continue entrepreneur, formation continue construction, heures formation continue rbq"},
+ {"id":"C-cours","url":"apecq.example","metier":"formation sst construction, formation prévention des chutes, formation silice, formation simdut, formation paie ccq, formation travail en hauteur, formation santé sécurité chantier, cours asp construction"},
+ {"id":"D-services","url":"apecq.example","metier":"association entrepreneurs construction, association patronale construction, cautionnement licence rbq, mutuelle de prévention, plan de garantie condo, démarrer entreprise construction, loi r-20, convention collective construction"}
 ]
