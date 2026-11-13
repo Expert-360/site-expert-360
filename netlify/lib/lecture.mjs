@@ -79,18 +79,20 @@ const RUBRIQUES = new Set([
   "mon compte", "panier", "boutique", "plan du site", "conditions", "mentions legales", "galerie", "photos", "videos",
   "ressources", "documentation", "telechargements", "evenements", "infolettre", "abonnez-vous", "suivez-nous", "facebook",
   "instagram", "linkedin", "youtube", "twitter", "appelez-nous", "ecrivez-nous", "prendre rendez-vous", "rendez-vous",
-  "expertise", "nos expertises", "expertises", "secteurs", "secteurs d'activite", "industries", "solutions", "nos solutions",
+  "expertise", "nos expertises", "expertises", "approche", "notre approche", "portfolio", "portefeuille", "a propos", "equipe", "secteurs", "secteurs d'activite", "industries", "solutions", "nos solutions",
 ]);
 const LIEUX = new Set(("quebec montreal laval gatineau longueuil sherbrooke levis saguenay terrebonne canada region province " +
   "rive-sud rive-nord sud nord monteregie laurentides lanaudiere estrie mauricie outaouais").split(" "));
 // Mots trop larges pour définir un métier à eux seuls.
+// Mots qui ne font pas un métier à eux seuls, mais qui peuvent en ouvrir un (« analyse de superficie »).
+const GENERIQUES = new Set("analyse analyses etude etudes approche mesure innovation innovant qualite performance excellence numerique".split(" "));
 export const MOTS_LARGES = new Set(("service services entreprise entreprises compagnie professionnel professionnels expert experts " +
-  "specialiste specialistes solution solutions qualite quebec montreal canada region travaux client clients projet projets " +
+  "specialiste specialistes expertise expertises leader solution solutions qualite quebec montreal canada region travaux client clients projet projets " +
   "residentiel commercial industriel institutionnel gestion conseil conseils groupe inc ltee").split(" "));
 
 // Détecte les métiers à partir du titre, de la description, des titres et du menu.
 // Renvoie au plus 8 expressions, triées par importance.
-export function extraireMetier(html, host) {
+export function extraireMetier(html, host, pagesServices = []) {
   const brand = norm(host.replace(/^www\./, "").split(".")[0]).replace(/[^a-z0-9]/g, "");
   const scores = new Map();
   const ajouter = (texte, poids) => {
@@ -109,10 +111,12 @@ export function extraireMetier(html, host) {
       mots = mots.slice(i0, i1);
       const o = orig.slice(i0, i1);
       if (!mots.length || mots.length > 6) continue;
+      // Slogans adressés au client (« donner vie à vos projets ») : pas un métier.
+      if (mots.some((w) => /^(vos|votre|vous|nous|notre|nos)$/.test(w))) continue;
       const n = mots.join(" ");
       if (n.length < 4 || n.length > 55 || RUBRIQUES.has(n) || /^\d/.test(n)) continue;
       const utiles = mots.filter((w) => w.length >= 4 && !VIDES.has(w) && !MOTS_LARGES.has(w) && !/^\d+$/.test(w));
-      if (!utiles.length) continue;
+      if (!utiles.length || utiles.every((w) => GENERIQUES.has(w))) continue;
       if (mots.length === 1 && n.length < 6) continue;
       // Forme affichée : accents d'origine, élisions recollées (« test d'étanchéité »).
       let affiche = "";
@@ -136,6 +140,13 @@ export function extraireMetier(html, host) {
     for (const a of bloc.matchAll(/<a[^>]*>([\s\S]*?)<\/a>/gi)) ajouter(a[1], 2);
   }
   for (const a of html.matchAll(/<a[^>]+href\s*=\s*["'][^"']*\/(?:services?|expertises?|solutions?)\/[^"']+["'][^>]*>([\s\S]*?)<\/a>/gi)) ajouter(a[1], 3);
+  // Pages « Expertise », « Services »… : leurs titres et leurs cartes sont la liste des métiers.
+  for (const ph of pagesServices) {
+    const t = (re) => [...ph.matchAll(re)].map((m) => m[1]);
+    for (const c of t(/<h1[^>]*>([\s\S]*?)<\/h1>/gi)) ajouter(c, 2);
+    for (const c of t(/<h[2-4][^>]*>([\s\S]*?)<\/h[2-4]>/gi)) ajouter(c, 4);
+    for (const c of t(/<(?:div|span|p|a)[^>]+class\s*=\s*["'][^"']*(?:title|titre|heading|card|service|expertise)[^"']*["'][^>]*>([^<]{4,80})</gi)) ajouter(c, 3);
+  }
 
   return [...scores.values()]
     .sort((a, b) => b.score - a.score || a.cle.length - b.cle.length)
@@ -146,3 +157,22 @@ export function extraireMetier(html, host) {
 
 // Recherches qui ne mènent jamais à un client (emploi, études, météo…) : exclues comme des mots-clés négatifs.
 export const NEGATIFS = /\b(emploi|emplois|job|jobs|salaire|salaires|stage|stages|carriere|carrieres|offre d emploi|cours|formation|formations|universite|cegep|etudes|etudiant|diplome|meteo|wikipedia|definition|synonyme|pdf|memoire|these|examen|quiz|gratuit en ligne|youtube|reddit|kijiji|marketplace|indeed|jobboom|recrutement|benevolat|bourse)\b/;
+
+// Liens vers les pages qui décrivent les services (« Expertise », « Services », « Solutions »…), au plus 2.
+const PAGE_SERVICES = /(expertises?|services?|solutions?|prestations|offres?|competences|domaines|savoir-faire|what-we-do|our-services)/i;
+export function liensServices(html, base) {
+  const out = [];
+  for (const m of html.matchAll(/<a[^>]+href\s*=\s*["']([^"'#]+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
+    let u;
+    try { u = new URL(m[1], base); } catch { continue; }
+    if (u.hostname.replace(/^www\./, "") !== base.hostname.replace(/^www\./, "")) continue;
+    const chemin = norm(decodeURIComponent(u.pathname)), texte = norm(decode(m[2]));
+    if (u.pathname === "/" || /\.(pdf|jpg|png|zip)$/i.test(u.pathname)) continue;
+    // Une page de premier niveau (/expertise, /services) : la page qui liste tous les services.
+    const niveau = u.pathname.split("/").filter(Boolean).length;
+    if (niveau > 2 || !(PAGE_SERVICES.test(chemin) || PAGE_SERVICES.test(texte))) continue;
+    const href = u.origin + u.pathname;
+    if (!out.some((x) => x.href === href)) out.push({ href, niveau });
+  }
+  return out.sort((a, b) => a.niveau - b.niveau).slice(0, 2).map((x) => x.href);
+}

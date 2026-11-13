@@ -3,7 +3,7 @@
 // Renvoie : score de potentiel, volumes, CPC, concurrence, saisonnalité, mots-clés.
 // Les identifiants viennent des variables d'environnement Netlify (jamais du code).
 
-import { lirePage, extraireMetier, NEGATIFS, MOTS_LARGES, parseSite as parseUrl } from "../lib/lecture.mjs";
+import { lirePage, extraireMetier, liensServices, NEGATIFS, MOTS_LARGES, parseSite as parseUrl } from "../lib/lecture.mjs";
 
 const API = "https://googleads.googleapis.com/v24";
 const GEO_QUEBEC = "geoTargetConstants/20123";
@@ -282,7 +282,12 @@ export default async (req) => {
   //    Le visiteur peut aussi le préciser lui-même (champ « metier », séparé par des virgules).
   const precise = String(body.metier || "").split(",").map((x) => x.trim()).filter((x) => x.length >= 3 && x.length <= 60).slice(0, 8);
   const lecture = precise.length ? Promise.resolve(precise)
-    : lirePage(new URL(parseUrl(site.url).origin + "/"), 5000).then((p) => extraireMetier(p.html, site.host)).catch((e) => {
+    : lirePage(new URL(parseUrl(site.url).origin + "/"), 5000).then(async (p) => {
+      // On lit aussi les pages « Expertise » / « Services » : c'est souvent là que le métier est décrit.
+      const pages = await Promise.all(liensServices(p.html, p.final).map((h) =>
+        lirePage(new URL(h), 3500).then((r) => r.html).catch(() => "")));
+      return extraireMetier(p.html, site.host, pages.filter(Boolean));
+    }).catch((e) => {
       console.error("analyse:lecture", site.host, String(e.message || e));
       return [];
     });
