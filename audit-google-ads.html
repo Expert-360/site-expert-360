@@ -133,8 +133,9 @@ tr.locked td{filter:blur(5px)}
 .unlock.done{display:none}
 @media (max-width:980px){.insight-grid{grid-template-columns:1fr}.unlock{position:static}}
 
-.dash-top{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:24px}
-.kpi-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.dash-top{display:grid;grid-template-columns:1fr;gap:24px}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+@media (max-width:980px){.kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .kpi-accent{background:var(--t-orange) !important;border-color:transparent !important}
 .dash-head{display:grid;gap:6px;margin:56px 0 20px}
 .dash-h{font-size:clamp(22px,2.2vw,30px);font-weight:800;font-stretch:110%;letter-spacing:-.01em}
@@ -285,11 +286,6 @@ tr.locked td{filter:blur(5px)}
 </div>
 
 <div class="dash-top">
-<div class="card card-dark score-card">
-<span class="eyebrow">Score de potentiel</span>
-<div class="gauge"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="52" fill="none" stroke="#24475C" stroke-width="12"/><circle id="g-arc" cx="60" cy="60" r="52" fill="none" stroke="#FA7119" stroke-width="12" stroke-linecap="round" stroke-dasharray="327" stroke-dashoffset="327" transform="rotate(-90 60 60)"/></svg><b id="r-score">0</b><span>/100</span></div>
-<p class="score-label" id="r-label"></p>
-</div>
 <div class="kpi-grid">
 <div class="card kpi-card"><span class="eyebrow">Recherches par mois</span><b id="r-vol">–</b><p>sur les mots-clés de votre secteur au Québec</p></div>
 <div class="card kpi-card"><span class="eyebrow">Coût moyen d'un clic</span><b id="r-cpc">–</b><p>en haut de page, pondéré par le volume</p></div>
@@ -305,8 +301,6 @@ tr.locked td{filter:blur(5px)}
 <div id="c-season" class="chart chart-bars" role="img"></div>
 </div>
 <div class="card chart-card"><span class="eyebrow">Intention de recherche</span><h4>Pourquoi ils cherchent</h4><div id="c-intent" class="chart chart-donut"></div></div>
-<div class="card chart-card" id="card-devices"><span class="eyebrow">Appareils</span><h4>D'où ils cherchent</h4><div id="c-devices" class="chart chart-donut"></div></div>
-<div class="card chart-card"><span class="eyebrow">Coût par clic</span><h4>Part des recherches par tranche de prix</h4><div id="c-cpc" class="chart"></div></div>
 <div class="card chart-card"><span class="eyebrow">Concurrence</span><h4>Part des recherches par niveau</h4><div id="c-comp" class="chart chart-donut"></div></div>
 </div>
 
@@ -388,6 +382,6 @@ tr.locked td{filter:blur(5px)}
 </div>
 </footer>
 <script src="/site.js" defer></script>
-<script src="/audit.js?v=7" defer></script>
+<script src="/audit.js?v=8" defer></script>
 </body>
 </html>

@@ -71,7 +71,6 @@
       result.hidden = false;
       $('unlock-fab').hidden = false;
       result.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      animateGauge($('g-arc'), $('r-score'), data.apercu.score);
     } catch (ex) {
       progress.hidden = true;
       showError(err, ex.message || "L'analyse n'a pas pu aboutir. Réessayez dans un instant.");
@@ -125,7 +124,9 @@
       var x = i * (bw + gap), y = H - bottom - h;
       var fill = m.mois === peak ? '#FA7119' : m.mois === low ? '#9AAAB5' : '#2D82AB';
       s.appendChild(svg('rect', { x: x, y: y, width: bw, height: h, rx: 4, fill: fill }));
-      if (!isMobile()) s.appendChild(svg('text', { x: x + bw / 2, y: y - 6, 'text-anchor': 'middle', 'class': 'v' }, short(m.recherches)));
+      var lab = svg('text', { x: x + bw / 2, y: y - 6, 'text-anchor': 'middle', 'class': 'v' }, short(m.recherches));
+      if (m) lab.setAttribute('font-size', isMobile() ? '9' : '11');
+      s.appendChild(lab);
       s.appendChild(svg('text', { x: x + bw / 2, y: H - 8, 'text-anchor': 'middle' }, isMobile() ? m.mois.charAt(0).toUpperCase() : m.mois.replace('.', '')));
     });
     box.appendChild(s);
@@ -272,8 +273,7 @@
     var a = data.apercu, r = data.rapport, gr = data.graphes || {};
     renderMetier();
     $('r-site').textContent = data.site;
-    $('r-title').textContent = a.scoreLabel + ' pour ' + data.site;
-    $('r-label').textContent = a.scoreLabel;
+    $('r-title').textContent = 'Le marché de votre secteur : ' + data.site;
     $('r-vol').textContent = nf.format(a.recherchesMois);
     $('r-cpc').textContent = money(a.cpcMoyen);
     $('r-comp').textContent = a.concurrence;
@@ -283,10 +283,6 @@
     $('r-season-note').textContent = 'Pic en ' + r.moisFort.replace(/\.$/, '') + ', creux en ' + r.moisFaible.replace(/\.$/, '') + '. Le budget doit suivre cette courbe.';
     var intents = gr.intentions || [];
     donut($('c-intent'), intents, intents.length ? intents[0].part + ' %' : '', intents.length ? 'principale' : '');
-    var dev = gr.appareils || [];
-    var mob = dev.filter(function (d) { return d.appareil === 'Mobile'; })[0];
-    $('card-devices').hidden = !donut($('c-devices'), dev.map(function (d) { return { nom: d.appareil, part: d.part }; }), mob ? mob.part + ' %' : '', mob ? 'mobile' : '');
-    hbars($('c-cpc'), gr.cpc);
     var CC = { 'Faible': '#3FA66A', 'Moyenne': '#FEB412', 'Élevée': '#FA7119' };
     donut($('c-comp'), (gr.concurrence || []).map(function (c) { return { nom: c.nom, part: c.part, color: CC[c.nom] }; }), String(a.concurrenceIndice), 'indice /100');
 
@@ -322,7 +318,6 @@
       unlocked = true;
       $('unlock-fab').hidden = true;
       render();
-      $('r-score').textContent = data.apercu.score;
       var rm = data.rapport.recherchesMarque;
       $('r-brand').textContent = rm > 0
         ? 'Votre nom est déjà cherché environ ' + nf.format(rm) + ' fois par mois : protégez-le avec une campagne de marque.'
