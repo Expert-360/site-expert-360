@@ -300,8 +300,6 @@
 
     seasonChart($('c-season'), r.saisonnalite, r.moisFort, r.moisFaible);
     $('r-season-note').textContent = 'Pic en ' + r.moisFort.replace(/\.$/, '') + ', creux en ' + r.moisFaible.replace(/\.$/, '') + '. Le budget doit suivre cette courbe.';
-    var intents = gr.intentions || [];
-    donut($('c-intent'), intents, intents.length ? intents[0].part + ' %' : '', intents.length ? 'principale' : '');
     renderRivaux(r);
 
     renderScenarios(data.scenarios || []);
