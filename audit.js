@@ -1,5 +1,5 @@
 // Expert 360 — outil d'audit Google Ads (page /audit-google-ads)
-// Tableau de bord : graphes du marché, préparation du site, scénarios de budget, détail.
+// Tableau de bord : graphes du marché, scénarios de budget, détail.
 // Dans chaque liste, 3 éléments sont visibles et le reste est flouté jusqu'au courriel.
 (function () {
   var $ = function (id) { return document.getElementById(id); };
@@ -60,13 +60,11 @@
     progress.hidden = false;
     progress.scrollIntoView({ behavior: 'smooth', block: 'start' });
     try {
-      var siteCall = (metier && site) ? Promise.resolve(site)
-        : post('/api/site', { url: url }).then(function (r) { return r.ok ? r.j : null; }).catch(function () { return null; });
-      var out = await Promise.all([post('/api/analyse', { url: url, metier: metier }), siteCall, animateSteps()]);
+      var out = await Promise.all([post('/api/analyse', { url: url, metier: metier }), animateSteps()]);
       var res = out[0];
       if (!res.ok) throw new Error(res.j.error || 'Erreur');
       if (res.j.empty) throw new Error(res.j.message);
-      data = res.j; site = out[1];
+      data = res.j;
       await wait(300);
       progress.hidden = true;
       render();
@@ -74,7 +72,6 @@
       $('unlock-fab').hidden = false;
       result.scrollIntoView({ behavior: 'smooth', block: 'start' });
       animateGauge($('g-arc'), $('r-score'), data.apercu.score);
-      if (site && site.ok) animateGauge($('s-arc'), $('s-score'), site.score);
     } catch (ex) {
       progress.hidden = true;
       showError(err, ex.message || "L'analyse n'a pas pu aboutir. Réessayez dans un instant.");
@@ -239,41 +236,6 @@
       : 'Ce que vos clients tapent sur Google';
   }
 
-  function renderSite() {
-    var ul = $('r-checks');
-    ul.innerHTML = '';
-    if (!site || !site.ok) {
-      $('s-score').textContent = '?';
-      $('s-sub').textContent = (site && site.message) || "Nous n'avons pas pu lire votre site automatiquement.";
-      ul.appendChild(el('li', 'check-msg', 'On vérifiera vos balises de suivi, vos conversions et votre page d’arrivée lors de l’appel.'));
-      return;
-    }
-    var pret = site.score;
-    $('s-label').textContent = pret >= 75 ? 'Site prêt pour la publicité' : pret >= 50 ? 'Site à compléter avant de lancer' : 'Site pas encore prêt pour la publicité';
-    $('s-sub').textContent = site.aCorriger
-      ? site.aCorriger + ' point' + (site.aCorriger > 1 ? 's' : '') + ' à corriger sur ' + site.verifs.length + ' vérifications.'
-      : 'Toutes les vérifications sont au vert.';
-    var MARK = { ok: '✓', warn: '!', bad: '✕' };
-    (unlocked ? site.verifs : site.verifs.slice(0, VISIBLE)).forEach(function (v) {
-      var li = el('li');
-      li.appendChild(el('span', 'dot ' + v.statut, MARK[v.statut]));
-      li.appendChild(el('b', '', v.nom));
-      li.appendChild(el('small', '', v.detail));
-      ul.appendChild(li);
-    });
-    if (!unlocked) {
-      var hidden = site.verifs.length - VISIBLE;
-      for (var i = 0; i < Math.min(hidden, 3); i++) {
-        var g = el('li', 'locked');
-        g.appendChild(el('span', 'dot warn', '!'));
-        g.appendChild(el('b', '', fake(16 + i * 2)));
-        g.appendChild(el('small', '', fake(20)));
-        ul.appendChild(g);
-      }
-      var t = el('li', 'lock-line'); t.appendChild(lockTag(hidden, 'vérifications')); ul.appendChild(t);
-    }
-  }
-
   function renderScenarios(list) {
     var box = $('r-scen'); box.innerHTML = '';
     var NOMS = ['Démarrage', 'Croissance', 'Accélération'];
@@ -328,7 +290,6 @@
     var CC = { 'Faible': '#3FA66A', 'Moyenne': '#FEB412', 'Élevée': '#FA7119' };
     donut($('c-comp'), (gr.concurrence || []).map(function (c) { return { nom: c.nom, part: c.part, color: CC[c.nom] }; }), String(a.concurrenceIndice), 'indice /100');
 
-    renderSite();
     renderScenarios(data.scenarios || []);
     renderKeywords(r.motsCles);
 
@@ -346,7 +307,6 @@
     f.namedItem('site').value = data.site; f.namedItem('score').value = a.score;
     f.namedItem('recherches').value = a.recherchesMois; f.namedItem('cpc').value = a.cpcMoyen;
     f.namedItem('concurrence').value = a.concurrence;
-    f.namedItem('pret').value = site && site.ok ? site.score : '';
     f.namedItem('metier').value = (data.metier || []).slice(0, 6).join(', ');
   }
 
@@ -362,7 +322,6 @@
       unlocked = true;
       $('unlock-fab').hidden = true;
       render();
-      if (site && site.ok) { $('s-score').textContent = site.score; $('s-arc').style.strokeDashoffset = String(327 * (1 - site.score / 100)); }
       $('r-score').textContent = data.apercu.score;
       var rm = data.rapport.recherchesMarque;
       $('r-brand').textContent = rm > 0
@@ -370,7 +329,7 @@
         : "Votre nom d'entreprise est encore peu cherché sur Google : la pub peut accélérer votre notoriété.";
       $('unlock').classList.add('done');
       $('report').hidden = false;
-      $('site-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      $('r-scen').scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch (ex) {
       showError(le, "L'envoi n'a pas fonctionné. Vérifiez votre courriel et réessayez.");
     } finally { btn.disabled = false; }

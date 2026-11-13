@@ -256,7 +256,7 @@ tr.locked td{filter:blur(5px)}
 <div class="progress-box">
 <span class="eyebrow">Analyse en cours · <span id="p-site"></span></span>
 <ol class="steps">
-<li>Lecture de votre site : votre métier et vos balises de suivi</li>
+<li>Lecture de votre site et de votre métier</li>
 <li>Recherches Google liées à votre métier</li>
 <li>Volumes, coût par clic et concurrence au Québec</li>
 <li>Concurrents, régions et appareils</li>
@@ -310,17 +310,11 @@ tr.locked td{filter:blur(5px)}
 <div class="card chart-card"><span class="eyebrow">Concurrence</span><h4>Part des recherches par niveau</h4><div id="c-comp" class="chart chart-donut"></div></div>
 </div>
 
-<div class="dash-head"><span class="eyebrow">02 · Votre site</span><h3 class="dash-h">Votre site est-il prêt pour la publicité ?</h3></div>
-<div class="card site-card" id="site-card">
-<div class="site-score"><div class="mini-gauge"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="52" fill="none" stroke="#EAF1F5" stroke-width="14"/><circle id="s-arc" cx="60" cy="60" r="52" fill="none" stroke="#2D82AB" stroke-width="14" stroke-linecap="round" stroke-dasharray="327" stroke-dashoffset="327" transform="rotate(-90 60 60)"/></svg><b id="s-score">–</b></div><div><b class="site-score-label" id="s-label">Préparation publicitaire</b><p id="s-sub"></p></div></div>
-<ul id="r-checks" class="check-list"></ul>
-</div>
-
-<div class="dash-head"><span class="eyebrow">03 · Budget</span><h3 class="dash-h">Ce que votre budget vous rapporterait</h3></div>
+<div class="dash-head"><span class="eyebrow">02 · Budget</span><h3 class="dash-h">Ce que votre budget vous rapporterait</h3></div>
 <div id="r-scen" class="scen-grid"></div>
 <p class="audit-note" id="r-scen-note"></p>
 
-<div class="dash-head"><span class="eyebrow">04 · Le détail</span><h3 class="dash-h">Mots-clés, concurrents, régions, opportunités</h3></div>
+<div class="dash-head"><span class="eyebrow">03 · Le détail</span><h3 class="dash-h">Mots-clés, concurrents, régions, opportunités</h3></div>
 <div class="insight-grid">
 <div class="card insight insight-wide">
 <span class="eyebrow">Mots-clés principaux</span>
@@ -346,11 +340,11 @@ tr.locked td{filter:blur(5px)}
 </div>
 
 <div class="card card-dark unlock" id="unlock">
-<div class="unlock-text"><h3>Débloquez le rapport complet</h3><p>Tous les mots-clés, concurrents, régions et opportunités, les 13 vérifications de votre site et les 3 scénarios de budget.</p></div>
+<div class="unlock-text"><h3>Débloquez le rapport complet</h3><p>Tous les mots-clés, concurrents, régions et opportunités, et les 3 scénarios de budget.</p></div>
 <form id="lead-form" name="audit-google-ads" method="POST" data-netlify="true" netlify-honeypot="bot-field" class="unlock-form">
 <input type="hidden" name="form-name" value="audit-google-ads">
 <p hidden><label>Ne pas remplir <input name="bot-field"></label></p>
-<input type="hidden" name="site"><input type="hidden" name="score"><input type="hidden" name="recherches"><input type="hidden" name="cpc"><input type="hidden" name="concurrence"><input type="hidden" name="pret"><input type="hidden" name="metier">
+<input type="hidden" name="site"><input type="hidden" name="score"><input type="hidden" name="recherches"><input type="hidden" name="cpc"><input type="hidden" name="concurrence"><input type="hidden" name="metier">
 <label class="sr-only" for="lead-email">Votre courriel</label>
 <input id="lead-email" name="courriel" type="email" autocomplete="email" placeholder="votre@courriel.ca" required>
 <button class="btn btn-orange" type="submit">Débloquer</button>
@@ -394,6 +388,6 @@ tr.locked td{filter:blur(5px)}
 </div>
 </footer>
 <script src="/site.js" defer></script>
-<script src="/audit.js?v=6" defer></script>
+<script src="/audit.js?v=7" defer></script>
 </body>
 </html>
