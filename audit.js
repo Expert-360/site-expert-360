@@ -125,7 +125,7 @@
       var fill = m.mois === peak ? '#FA7119' : m.mois === low ? '#9AAAB5' : '#2D82AB';
       s.appendChild(svg('rect', { x: x, y: y, width: bw, height: h, rx: 4, fill: fill }));
       var lab = svg('text', { x: x + bw / 2, y: y - 6, 'text-anchor': 'middle', 'class': 'v' }, short(m.recherches));
-      if (m) lab.setAttribute('font-size', isMobile() ? '9' : '11');
+      lab.style.fontSize = isMobile() ? '9px' : '11px';
       s.appendChild(lab);
       s.appendChild(svg('text', { x: x + bw / 2, y: H - 8, 'text-anchor': 'middle' }, isMobile() ? m.mois.charAt(0).toUpperCase() : m.mois.replace('.', '')));
     });
