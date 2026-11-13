@@ -177,6 +177,8 @@ tr.locked td{filter:blur(5px)}
 .hbar em{font-style:normal;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hbar .track{height:14px;border-radius:7px;background:var(--chip);overflow:hidden}
 .hbar .track i{display:block;height:100%;border-radius:7px;background:var(--blue)}
+.top-kw .hbar{grid-template-columns:minmax(0,260px) minmax(0,1fr) 64px}
+@media (max-width:600px){.top-kw .hbar{grid-template-columns:minmax(0,150px) minmax(0,1fr) 52px}}
 .hbar.me em{font-weight:700}.hbar.me .track i{background:var(--orange)}
 .hbar b{font-family:var(--mono);font-size:13px;font-weight:500;text-align:right}
 .chart-empty{color:var(--muted);font-size:15px}
@@ -295,7 +297,10 @@ tr.locked td{filter:blur(5px)}
 </div>
 </div>
 
-<div class="dash-head"><span class="eyebrow">01 · Le marché</span><h3 class="dash-h">Ce que vos clients cherchent, et quand</h3></div>
+<div class="dash-head"><span class="eyebrow">01 · Vos mots-clés</span><h3 class="dash-h">Les 10 recherches principales liées à vos services</h3></div>
+<div class="card chart-card top-kw"><div id="c-topkw" class="chart"></div><p class="chart-note">Recherches mensuelles moyennes sur Google, au Québec, en français.</p></div>
+
+<div class="dash-head"><span class="eyebrow">02 · Le marché</span><h3 class="dash-h">Ce que vos clients cherchent, et quand</h3></div>
 <div class="dash-grid">
 <div class="card chart-card dash-wide">
 <div class="chart-head"><div><span class="eyebrow">Saisonnalité</span><h4>Recherches par mois sur 12 mois</h4></div><p class="chart-note" id="r-season-note"></p></div>
@@ -304,11 +309,11 @@ tr.locked td{filter:blur(5px)}
 <div class="card chart-card dash-wide"><span class="eyebrow">Concurrents</span><h4>Recherches mensuelles sur leur nom, et le vôtre</h4><div id="c-rivaux" class="chart"></div><p class="chart-note" id="c-rivaux-note"></p></div>
 </div>
 
-<div class="dash-head"><span class="eyebrow">02 · Budget</span><h3 class="dash-h">Ce que votre budget vous rapporterait</h3></div>
+<div class="dash-head"><span class="eyebrow">03 · Budget</span><h3 class="dash-h">Ce que votre budget vous rapporterait</h3></div>
 <div id="r-scen" class="scen-grid"></div>
 <p class="audit-note" id="r-scen-note"></p>
 
-<div class="dash-head"><span class="eyebrow">03 · Le détail</span><h3 class="dash-h">Mots-clés, concurrents, régions, opportunités</h3></div>
+<div class="dash-head"><span class="eyebrow">04 · Le détail</span><h3 class="dash-h">Mots-clés, concurrents, régions, opportunités</h3></div>
 <div class="insight-grid">
 <div class="card insight insight-wide">
 <span class="eyebrow">Mots-clés principaux</span>
@@ -382,6 +387,6 @@ tr.locked td{filter:blur(5px)}
 </div>
 </footer>
 <script src="/site.js" defer></script>
-<script src="/audit.js?v=10" defer></script>
+<script src="/audit.js?v=11" defer></script>
 </body>
 </html>

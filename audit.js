@@ -176,6 +176,23 @@
     box.appendChild(wrap);
   }
 
+  // Les 10 recherches principales du métier, avec leur volume mensuel.
+  function renderTopKw(list) {
+    var box = $('c-topkw'); box.innerHTML = '';
+    var rows = list.slice(0, 10);
+    if (!rows.length) { box.appendChild(el('p', 'chart-empty', 'Pas assez de recherches pour ce métier.')); return; }
+    var max = Math.max.apply(null, rows.map(function (k) { return k.volume; })) || 1;
+    var wrap = el('div', 'hbars');
+    rows.forEach(function (k) {
+      var row = el('div', 'hbar'), track = el('span', 'track'), bar = el('i');
+      bar.style.width = Math.max(2, Math.round((k.volume / max) * 100)) + '%';
+      track.appendChild(bar);
+      row.appendChild(el('em', '', k.mot)); row.appendChild(track); row.appendChild(el('b', '', nf.format(k.volume)));
+      wrap.appendChild(row);
+    });
+    box.appendChild(wrap);
+  }
+
   // Concurrents : recherches sur leur nom (3 premiers) face à celles sur le nom du prospect.
   function renderRivaux(r) {
     var box = $('c-rivaux'); box.innerHTML = '';
@@ -301,6 +318,7 @@
     seasonChart($('c-season'), r.saisonnalite, r.moisFort, r.moisFaible);
     $('r-season-note').textContent = 'Pic en ' + r.moisFort.replace(/\.$/, '') + ', creux en ' + r.moisFaible.replace(/\.$/, '') + '. Le budget doit suivre cette courbe.';
     renderRivaux(r);
+    renderTopKw(r.motsCles || []);
 
     renderScenarios(data.scenarios || []);
     renderKeywords(r.motsCles);
