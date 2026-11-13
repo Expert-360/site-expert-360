@@ -450,7 +450,18 @@ export default async (req) => {
   const isCompetitorSearch = (k) => k.brands.some((n) => !isOwnName(n) && (isRealBrand(n) || PAS_CONCURRENT.test(norm(n))));
   // Recherches de produits (ex. « boîte de déménagement ») : forte concurrence mais clic bon marché = commerce en ligne.
   const isProduct = (k) => k.compIndex !== null && k.compIndex >= 67 && ((k.high !== null && k.high < 3.5) || (k.low !== null && k.low < 0.6));
-  const market = all.filter((k) => duMetier(k) && !isBrand(k) && !isCompetitorSearch(k) && !isProduct(k)).sort((a, b) => b.volume - a.volume);
+  // Intention d'achat : on écarte les mots génériques (« stratégie », « données ») et les recherches
+  // purement informatives. Une recherche est retenue si elle a plus d'un mot (ou si ce mot seul est un métier
+  // du site, ex. « thermographie »), et si elle montre une intention commerciale : annonceurs présents,
+  // enchère réelle, ou un mot d'achat (agence, prix, soumission, ville…).
+  const MODIF = /\b(agence|agences|firme|firmes|consultant|consultants|expert|experts|specialiste|specialistes|service|services|entreprise|entreprises|compagnie|compagnies|prix|cout|couts|tarif|tarifs|soumission|soumissions|devis|estimation|pres de moi|professionnel|professionnels|montreal|quebec|laval|longueuil|gatineau|sherbrooke|levis|terrebonne|rive sud|rive nord|near me|company|companies|agency|agencies|services|cost|price|prices|quote|consultant|contractor|montreal)\b/;
+  const metierSimple = new Set(metier.filter((m) => !/\s/.test(m.trim())).map((m) => norm(m)));
+  const commercial = (k) => (k.compIndex ?? 0) >= 25 || (k.high ?? 0) >= 1 || MODIF.test(" " + norm(k.keyword).replace(/[^a-z0-9]+/g, " ") + " ");
+  const unMot = (k) => { const n = norm(k.keyword).replace(/[^a-z0-9]+/g, " ").trim(); return !n.includes(" ") && !(metierSimple.has(n) && commercial(k)); };
+  const base = all.filter((k) => duMetier(k) && !isBrand(k) && !isCompetitorSearch(k) && !isProduct(k) && !unMot(k));
+  let market = base.filter(commercial);
+  if (market.length < 5) market = base.filter((k) => k.keyword.trim().includes(" ")); // très petit secteur : au moins des recherches de plusieurs mots
+  market.sort((a, b) => b.volume - a.volume);
   if (!market.length) {
     return json({ site: site.host, empty: true, message: "Pas assez de recherches Google au Québec pour ce métier." });
   }

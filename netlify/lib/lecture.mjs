@@ -85,7 +85,9 @@ const LIEUX = new Set(("quebec montreal laval gatineau longueuil sherbrooke levi
   "rive-sud rive-nord sud nord monteregie laurentides lanaudiere estrie mauricie outaouais").split(" "));
 // Mots trop larges pour définir un métier à eux seuls.
 // Mots qui ne font pas un métier à eux seuls, mais qui peuvent en ouvrir un (« analyse de superficie »).
-const GENERIQUES = new Set("analyse analyses etude etudes approche mesure innovation innovant qualite performance excellence numerique".split(" "));
+const GENERIQUES = new Set(("analyse analyses etude etudes approche mesure innovation innovant qualite performance excellence numerique " +
+  "strategie strategies donnees data croissance transformation gestion planification developpement accompagnement optimisation " +
+  "digital technologie technologies resultats succes valeur vision mission avenir impact efficacite").split(" "));
 export const MOTS_LARGES = new Set(("service services entreprise entreprises compagnie professionnel professionnels expert experts " +
   "specialiste specialistes expertise expertises leader solution solutions qualite quebec montreal canada region travaux client clients projet projets " +
   "residentiel commercial industriel institutionnel gestion conseil conseils groupe inc ltee").split(" "));
