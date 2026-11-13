@@ -1,0 +1,23 @@
+name: audit-run
+on:
+  push:
+    branches: [audit-run]
+    paths: [requests.json]
+permissions:
+  contents: write
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          mkdir -p out
+          jq -c '.[]' requests.json | while read -r r; do
+            id=$(echo "$r" | jq -r .id)
+            body=$(echo "$r" | jq -c '{url, metier}')
+            curl -sS -m 120 -X POST https://expert-360.ca/api/analyse -H 'Content-Type: application/json' -d "$body" -o "out/$id.json" -w "$id %{http_code}\n" || true
+            sleep 3
+          done
+      - run: |
+          git config user.name audit-bot && git config user.email audit-bot@users.noreply.github.com
+          git add out && git commit -m "résultats [skip ci]" && git push
