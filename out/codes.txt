@@ -1,6 +1,0 @@
-comprendre bissonexpert.com 200 6.891978s
-analyse bissonexpert.com 200 16.063469s
-comprendre apecq.org 200 7.243951s
-analyse apecq.org 200 8.702146s
-comprendre dronenetwork.ca 200 8.795414s
-analyse dronenetwork.ca 200 12.950252s
