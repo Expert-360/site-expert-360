@@ -20,10 +20,11 @@ async function appelClaude({ model, system, user, maxTokens = 1500, timeoutMs = 
         "x-api-key": process.env.ANTHROPIC_API_KEY,
         "anthropic-version": "2023-06-01",
       },
-      body: JSON.stringify({ model, max_tokens: maxTokens, system, messages: [{ role: "user", content: user }] }),
+      body: JSON.stringify({ model, max_tokens: maxTokens, system, messages: [{ role: "user", content: user }], ...(process.env.AUDIT_REFLEXION === "on" ? {} : { thinking: { type: "disabled" } }) }),
     });
     if (!r.ok) throw new Error("ia:" + r.status + ":" + (await r.text()).slice(0, 200));
     const j = await r.json();
+    if (process.env.AUDIT_DEBUG) console.log("ia", model, j.usage, j.stop_reason);
     const txt = (j.content || []).filter((c) => c.type === "text").map((c) => c.text).join("");
     const m = txt.match(/\{[\s\S]*\}/);
     if (!m) throw new Error("ia:json:" + (j.stop_reason || ""));
@@ -171,7 +172,7 @@ Règles d'écriture :
 - Chaque observation : un titre court en gras d'idée (champ "titre") et une ou deux phrases concrètes (champ "texte"), appuyées sur les chiffres fournis. Ton direct, professionnel, sans jargon inutile, sans promesse de résultat.
 - N'invente aucun volume ni CPC : utilise seulement ceux fournis. Les montants de budget sont des estimations raisonnables à partir des CPC et volumes fournis.
 - Ne recommande pas ce que l'entreprise a déjà (voir « déjà en place »).
-- 5 ou 6 observations. Un budget par campagne (2 à 4 campagnes, regroupant les services), avec une fourchette mensuelle et l'ajustement saisonnier. 6 à 12 mots-clés négatifs.
+- 5 observations, chacune en 2 phrases au plus. Un budget par campagne (2 à 4 campagnes, regroupant les services), avec une fourchette mensuelle et l'ajustement saisonnier. 6 à 12 mots-clés négatifs.
 
 Réponds uniquement en JSON, sans texte autour :
 {"observations":[{"titre":"","texte":""}],"budget":[{"campagne":"","min":0,"max":0,"saison":""}],"budget_note":"","negatifs":[""]}`;
