@@ -1,4 +1,0 @@
-comprendre bissonexpert.com 200 7.815700s
-analyse bissonexpert.com 200 16.860008s
-comprendre apecq.org 200 7.227966s
-analyse apecq.org 200 14.333820s
