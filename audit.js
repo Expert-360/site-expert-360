@@ -42,6 +42,7 @@
   };
 
   var lastUrl = '';
+  var IA = /[?&]ia=1\b/.test(location.search);
 
   form.addEventListener('submit', function (e) {
     e.preventDefault();
@@ -60,7 +61,12 @@
     progress.hidden = false;
     progress.scrollIntoView({ behavior: 'smooth', block: 'start' });
     try {
-      var out = await Promise.all([post('/api/analyse', { url: url, metier: metier }), animateSteps()]);
+      // Version avec Claude (?ia=1) : comprendre le métier d'abord, puis guider Keyword Planner.
+      var profil = null;
+      if (IA && !metier) {
+        try { var c = await post('/api/comprendre', { url: url }); if (c.ok && c.j.profil) profil = c.j.profil; } catch (e) {}
+      }
+      var out = await Promise.all([post('/api/analyse', { url: url, metier: metier, profil: profil }), animateSteps()]);
       var res = out[0];
       if (!res.ok) throw new Error(res.j.error || 'Erreur');
       if (res.j.empty) throw new Error(res.j.message);
@@ -85,6 +91,12 @@
     if (!list.length) { box.appendChild(el('span', 'metier-none', 'déduit des recherches liées à votre site')); }
     list.forEach(function (m) { box.appendChild(el('span', 'chip metier-chip', m)); });
     $('metier-input').value = (data.metier || []).slice(0, 6).join(', ');
+    if (data.ia && data.ia.profil) {
+      var n = 'Analyse guidée par IA · ' + (data.ia.profil.metier || '');
+      if (data.ia.tri) n += ' · ' + data.ia.rejetes + ' recherches hors sujet écartées';
+      else n += ' · tri automatique indisponible';
+      box.appendChild(el('span', 'metier-none', n));
+    }
   }
   $('metier-edit').addEventListener('click', function () {
     var f = $('metier-form'); f.hidden = !f.hidden;

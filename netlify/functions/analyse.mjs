@@ -4,6 +4,7 @@
 // Les identifiants viennent des variables d'environnement Netlify (jamais du code).
 
 import { lirePage, extraireMetier, liensServices, lienAnglais, NEGATIFS, MOTS_LARGES, parseSite as parseUrl } from "../lib/lecture.mjs";
+import { profilValide, trierMotsCles, iaDisponible } from "../lib/ia.mjs";
 
 const API = "https://googleads.googleapis.com/v24";
 const GEO_QUEBEC = "geoTargetConstants/20123";
@@ -279,6 +280,9 @@ export default async (req) => {
   try { body = await req.json(); } catch { return json({ error: "Requête invalide." }, 400); }
   const site = parseSite(body.url);
   if (!site) return json({ error: "Adresse de site invalide. Exemple : votresite.ca" }, 400);
+  const t0 = Date.now();
+  // Profil du métier produit par Claude (/api/comprendre) : il guide Keyword Planner et le tri.
+  const profil = iaDisponible() ? profilValide(body.profil) : null;
 
   // 1. Le métier : ce que le site vend, lu dans son titre, sa description, ses titres et son menu.
   //    Le visiteur peut aussi le préciser lui-même (champ « metier », séparé par des virgules).
@@ -286,7 +290,8 @@ export default async (req) => {
   // Pages lues : l'accueil, puis les pages « Expertise » / « Services » trouvées dans le menu,
   // ou à défaut aux adresses courantes (/expertise, /services…).
   const CHEMINS = ["/expertise", "/expertises", "/services", "/nos-services", "/solutions"];
-  const lecture = precise.length ? lirePage(new URL(parseUrl(site.url).origin + "/"), 4000).then((p) => ({ metier: precise, pagesServices: [], faible: false, enUrl: lienAnglais(p.html, p.final) })).catch(() => ({ metier: precise, pagesServices: [], faible: false, enUrl: null }))
+  const lecture = profil ? Promise.resolve({ metier: profil.services.map((x) => x.nom), pagesServices: [], faible: false, enUrl: null })
+    : precise.length ? lirePage(new URL(parseUrl(site.url).origin + "/"), 4000).then((p) => ({ metier: precise, pagesServices: [], faible: false, enUrl: lienAnglais(p.html, p.final) })).catch(() => ({ metier: precise, pagesServices: [], faible: false, enUrl: null }))
     : lirePage(new URL(parseUrl(site.url).origin + "/"), 5000).then(async (p) => {
       let liens = liensServices(p.html, p.final);
       if (!liens.length) liens = CHEMINS.map((c) => p.final.origin + c);
@@ -306,65 +311,80 @@ export default async (req) => {
     let lu;
     [token, lu] = await Promise.all([getAccessToken(), lecture]);
     metier = lu.metier;
-    // 2. Quand la lecture du site est pauvre, on demande à Google de lire la page des services
-    //    (son robot affiche les sites en JavaScript) et on en tire les métiers.
-    if (lu.faible) {
-      const pageGoogle = lu.pagesServices[0] || site.url;
-      try {
-        const viaGoogle = await keywordIdeas(token, { urlSeed: { url: pageGoogle } });
-        const tetes = new Set(metier.map((m) => norm(m).split(/[^a-z0-9]+/)[0]));
-        const ajout = [];
-        viaGoogle
-          .filter((r) => !((r.keywordAnnotations || {}).concepts || []).some((c) => /BRAND/.test(c.conceptGroup?.type || "") && c.conceptGroup.type !== "NON_BRAND"))
-          .filter((r) => !NEGATIFS.test(" " + norm(r.text).replace(/[^a-z0-9]+/g, " ") + " "))
-          .sort((x, y) => Number(y.keywordIdeaMetrics?.avgMonthlySearches || 0) - Number(x.keywordIdeaMetrics?.avgMonthlySearches || 0))
-          .forEach((r) => {
-            const mots = norm(r.text).split(/[^a-z0-9]+/).filter((w) => w.length >= 4 && !MOTS_LARGES.has(w));
-            const tete = mots[0];
-            if (!tete || tetes.has(tete) || ajout.length >= 8 || r.text.split(" ").length > 4) return;
-            tetes.add(tete); ajout.push(r.text);
-          });
-        metier = [...ajout, ...metier].slice(0, 10);
-        raw = viaGoogle;
-      } catch (e) {
-        console.error("analyse:urlseed", site.host, String(e.message || e));
+    if (profil) {
+      // Recherches préparées par Claude, service par service, en français et en anglais.
+      const fr = [...new Set(profil.services.flatMap((x) => x.fr))].slice(0, 40);
+      const en = [...new Set(profil.services.flatMap((x) => x.en))].slice(0, 20);
+      const lots = [];
+      for (let i = 0; i < fr.length; i += 20) lots.push(fr.slice(i, i + 20));
+      const res = await Promise.all([
+        ...lots.map((l) => keywordIdeas(token, { keywordSeed: { keywords: l } })),
+        en.length ? keywordIdeas(token, { keywordSeed: { keywords: en } }, LANG_EN).catch(() => []) : Promise.resolve([]),
+      ]);
+      rawEn = res.pop();
+      const vus = new Set();
+      raw = res.flat().filter((r) => !vus.has(r.text) && vus.add(r.text));
+    } else {
+      // 2. Quand la lecture du site est pauvre, on demande à Google de lire la page des services
+      //    (son robot affiche les sites en JavaScript) et on en tire les métiers.
+      if (lu.faible) {
+        const pageGoogle = lu.pagesServices[0] || site.url;
+        try {
+          const viaGoogle = await keywordIdeas(token, { urlSeed: { url: pageGoogle } });
+          const tetes = new Set(metier.map((m) => norm(m).split(/[^a-z0-9]+/)[0]));
+          const ajout = [];
+          viaGoogle
+            .filter((r) => !((r.keywordAnnotations || {}).concepts || []).some((c) => /BRAND/.test(c.conceptGroup?.type || "") && c.conceptGroup.type !== "NON_BRAND"))
+            .filter((r) => !NEGATIFS.test(" " + norm(r.text).replace(/[^a-z0-9]+/g, " ") + " "))
+            .sort((x, y) => Number(y.keywordIdeaMetrics?.avgMonthlySearches || 0) - Number(x.keywordIdeaMetrics?.avgMonthlySearches || 0))
+            .forEach((r) => {
+              const mots = norm(r.text).split(/[^a-z0-9]+/).filter((w) => w.length >= 4 && !MOTS_LARGES.has(w));
+              const tete = mots[0];
+              if (!tete || tetes.has(tete) || ajout.length >= 8 || r.text.split(" ").length > 4) return;
+              tetes.add(tete); ajout.push(r.text);
+            });
+          metier = [...ajout, ...metier].slice(0, 10);
+          raw = viaGoogle;
+        } catch (e) {
+          console.error("analyse:urlseed", site.host, String(e.message || e));
+        }
       }
-    }
-    // 3. Les recherches partent du métier. Sans métier lisible, on se rabat sur le site lui-même.
-    if (metier.length >= 2) {
-      const parMetier = await keywordIdeas(token, { keywordSeed: { keywords: metier.slice(0, 10) } });
-      const known = new Set((raw || []).map((r) => r.text));
-      raw = (raw || []).concat(parMetier.filter((r) => !known.has(r.text)));
-    }
-    if (!raw || raw.length < 10) {
-      raw = await keywordIdeas(token, { siteSeed: { site: site.host } });
-      if (raw.length < 10) raw = await keywordIdeas(token, { urlSeed: { url: site.url } });
-      if (metier.length < 2) metier = [];
-    }
-  // 2e passe : élargir à partir des 3 recherches principales du métier (sans marque),
-    // pour faire ressortir davantage de concurrents. En cas d'échec, on garde la 1re passe.
-    const seeds = raw
-      .filter((r) => !((r.keywordAnnotations || {}).concepts || []).some((c) => /BRAND/.test(c.conceptGroup?.type || "") && c.conceptGroup.type !== "NON_BRAND"))
-      .filter((r) => !NEGATIFS.test(" " + norm(r.text).replace(/[^a-z0-9]+/g, " ") + " "))
-      .filter((r) => !metier.length || pertinent(r.text, racines(metier)).fort)
-      .sort((a, b) => Number(b.keywordIdeaMetrics?.avgMonthlySearches || 0) - Number(a.keywordIdeaMetrics?.avgMonthlySearches || 0))
-      .slice(0, 3)
-      .map((r) => r.text);
-    if (seeds.length) {
-      try {
-        const more = await keywordIdeas(token, { keywordSeed: { keywords: seeds } });
-        const known = new Set(raw.map((r) => r.text));
-        raw = raw.concat(more.filter((r) => !known.has(r.text)));
-      } catch (e) {
-        console.error("analyse:seed2", site.host, String(e.message || e));
+      // 3. Les recherches partent du métier. Sans métier lisible, on se rabat sur le site lui-même.
+      if (metier.length >= 2) {
+        const parMetier = await keywordIdeas(token, { keywordSeed: { keywords: metier.slice(0, 10) } });
+        const known = new Set((raw || []).map((r) => r.text));
+        raw = (raw || []).concat(parMetier.filter((r) => !known.has(r.text)));
       }
-    }
-    // 4. Le marché anglophone : Google lit la version anglaise du site, si elle existe.
-    if (lu.enUrl) {
-      try {
-        rawEn = await keywordIdeas(token, { urlSeed: { url: lu.enUrl } }, LANG_EN);
-      } catch (e) {
-        console.error("analyse:anglais", site.host, String(e.message || e));
+      if (!raw || raw.length < 10) {
+        raw = await keywordIdeas(token, { siteSeed: { site: site.host } });
+        if (raw.length < 10) raw = await keywordIdeas(token, { urlSeed: { url: site.url } });
+        if (metier.length < 2) metier = [];
+      }
+    // 2e passe : élargir à partir des 3 recherches principales du métier (sans marque),
+      // pour faire ressortir davantage de concurrents. En cas d'échec, on garde la 1re passe.
+      const seeds = raw
+        .filter((r) => !((r.keywordAnnotations || {}).concepts || []).some((c) => /BRAND/.test(c.conceptGroup?.type || "") && c.conceptGroup.type !== "NON_BRAND"))
+        .filter((r) => !NEGATIFS.test(" " + norm(r.text).replace(/[^a-z0-9]+/g, " ") + " "))
+        .filter((r) => !metier.length || pertinent(r.text, racines(metier)).fort)
+        .sort((a, b) => Number(b.keywordIdeaMetrics?.avgMonthlySearches || 0) - Number(a.keywordIdeaMetrics?.avgMonthlySearches || 0))
+        .slice(0, 3)
+        .map((r) => r.text);
+      if (seeds.length) {
+        try {
+          const more = await keywordIdeas(token, { keywordSeed: { keywords: seeds } });
+          const known = new Set(raw.map((r) => r.text));
+          raw = raw.concat(more.filter((r) => !known.has(r.text)));
+        } catch (e) {
+          console.error("analyse:seed2", site.host, String(e.message || e));
+        }
+      }
+      // 4. Le marché anglophone : Google lit la version anglaise du site, si elle existe.
+      if (lu.enUrl) {
+        try {
+          rawEn = await keywordIdeas(token, { urlSeed: { url: lu.enUrl } }, LANG_EN);
+        } catch (e) {
+          console.error("analyse:anglais", site.host, String(e.message || e));
+        }
       }
     }
   } catch (e) {
@@ -379,10 +399,10 @@ export default async (req) => {
   const rac = metier.length ? racines(metier) : null;
   // Recherche liée au métier : contient un mot porteur du métier (pas seulement un qualificatif).
   // Si le filtre est trop strict pour ce site (moins de 15 recherches), on le relâche.
-  let filtreFr = (k) => !rac || pertinent(k.keyword, rac).fort;
+  let filtreFr = (k) => profil || !rac || pertinent(k.keyword, rac).fort;
   const frs = all.filter((k) => k.lang === "fr");
-  if (rac && frs.filter(filtreFr).length < 15) filtreFr = (k) => { const p = pertinent(k.keyword, rac); return p.fort || p.faible; };
-  if (rac && frs.filter(filtreFr).length < 15) filtreFr = () => true;
+  if (!profil && rac && frs.filter(filtreFr).length < 15) filtreFr = (k) => { const p = pertinent(k.keyword, rac); return p.fort || p.faible; };
+  if (!profil && rac && frs.filter(filtreFr).length < 15) filtreFr = () => true;
   // Les recherches anglaises viennent de la page anglaise du site : Google les a déjà liées au métier.
   const duMetier = (k) => k.lang === "en" || filtreFr(k);
   if (all.length === 0) {
@@ -439,7 +459,7 @@ export default async (req) => {
       compMap.set(name, e);
     }
   }
-  const concurrents = [...compMap.values()]
+  let concurrents = [...compMap.values()]
     .filter((c) => c.recherches >= 30)
     .sort((a, b) => b.recherches - a.recherches)
     .slice(0, 8)
@@ -462,6 +482,28 @@ export default async (req) => {
   let market = base.filter(commercial);
   if (market.length < 5) market = base.filter((k) => k.keyword.trim().includes(" ")); // très petit secteur : au moins des recherches de plusieurs mots
   market.sort((a, b) => b.volume - a.volume);
+  // Tri par Claude : on ne garde que les recherches d'un client de CE métier, et les vrais concurrents.
+  let ia = null;
+  if (profil) {
+    ia = { profil, tri: false };
+    const cands = all.filter((k) => !isBrand(k) && !isCompetitorSearch(k)).sort((a, b) => b.volume - a.volume).slice(0, 220);
+    const restant = Math.min(5000, 7500 - (Date.now() - t0));
+    try {
+      if (restant < 2000) throw new Error("temps");
+      const tri = await trierMotsCles({ profil, mots: cands, marques: [...compMap.keys()].slice(0, 40), timeoutMs: restant });
+      const gardes = cands.filter((k, i) => tri.garder.has(i));
+      if (gardes.length >= 3) {
+        market = gardes.sort((a, b) => b.volume - a.volume);
+        concurrents = concurrents.filter((c) => tri.concurrents.has(c.nom.toLowerCase()));
+        ia.tri = true;
+        ia.gardes = gardes.length;
+        ia.rejetes = cands.length - gardes.length;
+        ia.volumeRejete = cands.filter((k, i) => !tri.garder.has(i)).reduce((t, k) => t + k.volume, 0);
+      }
+    } catch (e) {
+      console.error("analyse:tri", site.host, String(e.message || e));
+    }
+  }
   if (!market.length) {
     return json({ site: site.host, empty: true, message: "Pas assez de recherches Google au Québec pour ce métier." });
   }
@@ -550,6 +592,7 @@ export default async (req) => {
     zone: "Québec",
     metier,
     langue: "français",
+    ia,
     apercu: {
       score,
       scoreLabel,
