@@ -1,3 +1,0 @@
-comprendre bissonexpert.com 200 8.622806s
-analyse bissonexpert.com 200 13.156586s
-rediger bissonexpert.com 502 22.969453s
