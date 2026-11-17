@@ -412,7 +412,7 @@
       '<div class="ria-kpi"><b>' + money(a.cpcMoyen) + '</b><small>coût par clic moyen, concurrence ' + esc(a.concurrence.toLowerCase()) + '</small></div>' +
       '<div class="ria-kpi"><b>' + nf.format(r.recherchesMarque || 0) + '</b><small>recherches sur la marque</small></div></div>' +
       '<div class="ria-card"><table><tr><th>Service</th><th class="n">Recherches par mois</th><th class="ria-ex">Exemples de recherches</th></tr>' +
-      services.map(function (x) { return '<tr><td><b>' + esc(x.nom) + '</b></td><td class="n">≈ ' + nf.format(x.volume) + '</td><td class="ria-note">' + esc(x.recherches.join(', ')) + '</td></tr>'; }).join('') + '</table></div>' +
+      services.map(function (x) { return '<tr><td><b>' + esc(x.nom) + '</b></td><td class="n">≈ ' + nf.format(x.volume) + '</td><td class="ria-note ria-ex">' + esc(x.recherches.join(', ')) + '</td></tr>'; }).join('') + '</table></div>' +
       (ia.ecartes && ia.ecartes.length ? '<div class="ria-callout"><b>Ce que l\'analyse du métier a écarté :</b> environ ' + nf.format(ia.volumeRejete) + ' recherches par mois proposées par Google n\'ont rien à voir avec les services, par exemple ' +
         ia.ecartes.slice(0, 4).map(function (k) { return '« ' + esc(k.mot) + ' » (' + nf.format(k.volume) + ')'; }).join(', ') + '. Une campagne qui les inclurait gaspillerait une partie du budget.</div>' : ''));
     // 03 · Les recherches principales
