@@ -486,7 +486,7 @@ export default async (req) => {
   let ia = null;
   if (profil) {
     ia = { profil, tri: false };
-    const cands = all.filter((k) => !isBrand(k) && !isCompetitorSearch(k)).sort((a, b) => b.volume - a.volume).slice(0, 220);
+    const cands = all.filter((k) => !isBrand(k) && !isCompetitorSearch(k)).sort((a, b) => b.volume - a.volume).slice(0, 160);
     const restant = Math.min(12000, 20000 - (Date.now() - t0));
     try {
       ia.budget = restant;
