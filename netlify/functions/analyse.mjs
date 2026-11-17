@@ -487,7 +487,7 @@ export default async (req) => {
   if (profil) {
     ia = { profil, tri: false };
     const cands = all.filter((k) => !isBrand(k) && !isCompetitorSearch(k)).sort((a, b) => b.volume - a.volume).slice(0, 220);
-    const restant = Math.min(5000, 7500 - (Date.now() - t0));
+    const restant = Math.min(12000, 20000 - (Date.now() - t0));
     try {
       if (restant < 2000) throw new Error("temps");
       const tri = await trierMotsCles({ profil, mots: cands, marques: [...compMap.keys()].slice(0, 40), timeoutMs: restant });
