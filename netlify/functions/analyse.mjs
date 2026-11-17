@@ -502,6 +502,12 @@ export default async (req) => {
         ia.gardes = gardes.length;
         ia.rejetes = cands.length - gardes.length;
         ia.volumeRejete = cands.filter((k) => !gardes.includes(k)).reduce((t, k) => t + k.volume, 0);
+        // Volumes par service (recherches retenues), et exemples de recherches écartées.
+        ia.services = profil.services.map((sv, n) => {
+          const ks = cands.filter((k, i) => tri.garder.has(i) && tri.service.get(i) === n).sort((x, y) => y.volume - x.volume);
+          return { nom: sv.nom, volume: ks.reduce((t, k) => t + k.volume, 0), recherches: ks.slice(0, 4).map((k) => k.keyword) };
+        }).filter((x) => x.volume > 0).sort((x, y) => y.volume - x.volume);
+        ia.ecartes = cands.filter((k) => !gardes.includes(k)).sort((x, y) => y.volume - x.volume).slice(0, 6).map((k) => ({ mot: k.keyword, volume: k.volume }));
       }
     } catch (e) {
       console.error("analyse:tri", site.host, String(e.message || e));

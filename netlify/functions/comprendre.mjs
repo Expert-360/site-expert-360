@@ -33,6 +33,14 @@ export default async (req) => {
     const restant = Math.max(6000, 22000 - (Date.now() - t0));
     const profil = await comprendreSite({ host: site.host, pages, timeoutMs: restant });
     if (!profil.services.length) return json({ error: "metier-introuvable" }, 422);
+    // Ce que le site a déjà, pour ne pas le recommander : pages de service, formulaire sur ces pages, téléphone cliquable.
+    const avecForm = lues.filter((p) => (p.html.match(/<form[\s\S]*?<\/form>/gi) || []).some((f) => (f.match(/<input(?![^>]*type=["']?(hidden|search|submit))/gi) || []).length >= 2 && !/search|recherche/i.test(f.slice(0, 300)))).length;
+    profil.deja = {
+      pagesService: lues.length,
+      formulaireSurPagesService: avecForm,
+      telephoneCliquable: /href=["']tel:/i.test(accueil.html),
+      versionAnglaise: Boolean(lienAnglais(accueil.html, accueil.final)),
+    };
     return json({ site: site.host, profil, anglais: Boolean(lienAnglais(accueil.html, accueil.final)), ms: Date.now() - t0 });
   } catch (e) {
     console.error("comprendre", site.host, String(e.message || e));

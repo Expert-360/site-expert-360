@@ -70,7 +70,7 @@
       var res = out[0];
       if (!res.ok) throw new Error(res.j.error || 'Erreur');
       if (res.j.empty) throw new Error(res.j.message);
-      data = res.j;
+      data = res.j; redac = null; redacEnCours = false;
       await wait(300);
       progress.hidden = true;
       render();
@@ -324,6 +324,13 @@
   function render() {
     var a = data.apercu, r = data.rapport, gr = data.graphes || {};
     renderMetier();
+    var modeIA = Boolean(data.ia && data.ia.tri);
+    result.classList.toggle('mode-ia', modeIA);
+    if (modeIA) {
+      $('r-title').textContent = 'Audit Google Ads : ' + data.site;
+      $('r-site').textContent = data.site;
+      renderIA();
+    }
     $('r-site').textContent = data.site;
     $('r-title').textContent = 'Le marché de votre secteur : ' + data.site;
     $('r-vol').textContent = nf.format(a.recherchesMois);
@@ -361,6 +368,103 @@
     f.namedItem('metier').value = (data.metier || []).slice(0, 6).join(', ');
   }
 
+
+  // ===== Rapport guidé par l'IA (?ia=1) : même structure que les audits manuels =====
+  var esc = function (v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var redac = null, redacEnCours = false;
+  function tag(c) { var k = c === 'Faible' ? 'f' : c === 'Moyenne' ? 'm' : 'e'; return '<span class="ria-tag ria-' + k + '">' + esc(c) + '</span>'; }
+  function cpcR(k) { return k.cpcBas !== null && k.cpcBas !== undefined ? money(k.cpcBas) + ' – ' + money(k.cpcHaut) : '—'; }
+  function sec(n, titre, corps) { return '<h3 class="ria-h"><span>' + n + '</span>' + esc(titre) + '</h3>' + corps; }
+  function verrou(titre) {
+    return '<div class="ria-card ria-lock"><p>' + esc(titre) + '</p><p class="ria-blur">■■■■■■■■■■ ■■■■■■ ■■■■■■■■■■■■ ■■■■■■■ ■■■■■■■■■ ■■■■■■■■■■■■■■ ■■■■■ ■■■■■■■■■■</p>' +
+      '<button type="button" class="btn btn-orange btn-sm ria-unlock">🔒 Débloquer avec votre courriel</button></div>';
+  }
+  function chiffresPourRedaction() {
+    var r = data.rapport, ia = data.ia;
+    return { total: data.apercu.recherchesMois, cpcMoyen: data.apercu.cpcMoyen, concurrence: data.apercu.concurrence, services: ia.services, motsCles: r.motsCles,
+      ecartes: ia.ecartes, moisFort: r.moisFort, moisFaible: r.moisFaible, regions: data.regions, concurrents: r.concurrents, marque: r.recherchesMarque };
+  }
+  async function lancerRedaction() {
+    if (redac || redacEnCours || !data || !data.ia) return;
+    redacEnCours = true;
+    try {
+      var r = await post('/api/rediger', { profil: data.ia.profil, chiffres: chiffresPourRedaction() });
+      redac = r.ok ? r.j : { erreur: true };
+    } catch (e) { redac = { erreur: true }; }
+    redacEnCours = false;
+    renderIA();
+  }
+  function renderIA() {
+    var box = $('rapport-ia'); if (!box || !data || !data.ia) return;
+    var ia = data.ia, p = ia.profil, a = data.apercu, r = data.rapport, h = '';
+    var services = ia.services || [], kws = r.motsCles || [];
+    // 01 · Le métier
+    var moitie = Math.ceil(p.services.length / 2);
+    var liste = function (arr) { return '<ul>' + arr.map(function (x) { return '<li>' + esc(x.nom) + '</li>'; }).join('') + '</ul>'; };
+    h += sec('01', 'Le métier', '<div class="ria-card"><p><b>Ce que ' + esc(p.entreprise || data.site) + ' vend :</b> ' + esc(p.metier) + (p.zone ? ', ' + esc(p.zone) : '') + '.</p>' +
+      (p.clientele ? '<p class="ria-note">Clientèle : ' + esc(p.clientele) + '</p>' : '') +
+      '<div class="ria-2col"><div>' + liste(p.services.slice(0, moitie)) + '</div><div>' + liste(p.services.slice(moitie)) + '</div></div>' +
+      (p.atouts && p.atouts.length ? '<p class="ria-note"><b>Atouts à mettre en avant dans les annonces :</b> ' + esc(p.atouts.join(' · ')) + '</p>' : '') + '</div>');
+    // 02 · Le marché
+    var s0 = services[0];
+    h += sec('02', 'Le marché sur Google', '<div class="ria-kpis">' +
+      '<div class="ria-kpi"><b>≈ ' + nf.format(a.recherchesMois) + '</b><small>recherches par mois réellement liées aux services</small></div>' +
+      (s0 ? '<div class="ria-kpi"><b>≈ ' + nf.format(s0.volume) + '</b><small>pour « ' + esc(s0.nom) + ' », le plus gros volume</small></div>' : '') +
+      '<div class="ria-kpi"><b>' + money(a.cpcMoyen) + '</b><small>coût par clic moyen, concurrence ' + esc(a.concurrence.toLowerCase()) + '</small></div>' +
+      '<div class="ria-kpi"><b>' + nf.format(r.recherchesMarque || 0) + '</b><small>recherches sur la marque</small></div></div>' +
+      '<div class="ria-card"><table><tr><th>Service</th><th class="n">Recherches par mois</th><th>Exemples de recherches</th></tr>' +
+      services.map(function (x) { return '<tr><td><b>' + esc(x.nom) + '</b></td><td class="n">≈ ' + nf.format(x.volume) + '</td><td class="ria-note">' + esc(x.recherches.join(', ')) + '</td></tr>'; }).join('') + '</table></div>' +
+      (ia.ecartes && ia.ecartes.length ? '<div class="ria-callout"><b>Ce que l\'analyse du métier a écarté :</b> environ ' + nf.format(ia.volumeRejete) + ' recherches par mois proposées par Google n\'ont rien à voir avec les services, par exemple ' +
+        ia.ecartes.slice(0, 4).map(function (k) { return '« ' + esc(k.mot) + ' » (' + nf.format(k.volume) + ')'; }).join(', ') + '. Une campagne qui les inclurait gaspillerait une partie du budget.</div>' : ''));
+    // 03 · Les recherches principales
+    var max = Math.max.apply(null, kws.map(function (k) { return k.volume; }).concat([1]));
+    var vis = unlocked ? kws : kws.slice(0, 5);
+    h += sec('03', 'Les recherches principales liées au métier', '<div class="ria-card"><table><tr><th>Recherche</th><th class="n">Volume</th><th class="ria-barcol"></th><th class="n">CPC (fourchette)</th><th>Concurrence</th></tr>' +
+      vis.map(function (k) { return '<tr><td>' + esc(k.mot) + (k.langue === 'en' ? ' <span class="ria-en">EN</span>' : '') + '</td><td class="n">' + nf.format(k.volume) + '</td><td><div class="ria-bar" style="width:' + Math.max(2, Math.round(k.volume / max * 100)) + '%"></div></td><td class="n">' + cpcR(k) + '</td><td>' + tag(k.concurrence) + '</td></tr>'; }).join('') +
+      (unlocked ? '' : kws.slice(5, 10).map(function () { return '<tr class="ria-blur"><td>■■■■■■■■■■■■</td><td class="n">■■■</td><td></td><td class="n">■■■■■</td><td>■■■■</td></tr>'; }).join('')) + '</table>' +
+      (unlocked ? '' : '<p class="ria-note">' + (kws.length - 5) + ' autres recherches dans le rapport complet.</p>') + '</div>');
+    // 04 · Saisonnalité et régions
+    var ms = r.saisonnalite || [], mx = Math.max.apply(null, ms.map(function (m) { return m.recherches; }).concat([1]));
+    var regs = (data.regions || []).slice(0, 6), rmax = regs.length ? regs[0].recherches : 1;
+    h += sec('04', 'Saisonnalité et régions', '<div class="ria-card"><b>Recherches liées aux services, par mois</b><div class="ria-chart">' +
+      ms.map(function (m) { var v = m.recherches; return '<div><em>' + (v >= 1000 ? (Math.round(v / 100) / 10).toString().replace('.', ',') + 'k' : v) + '</em><i' + (v >= mx * 0.75 ? ' class="hi"' : '') + ' style="height:' + Math.max(3, Math.round(v / mx * 100)) + '%"></i>' + esc(m.mois) + '</div>'; }).join('') +
+      '</div><p class="ria-note">Pic en ' + esc(r.moisFort.replace(/\.$/, '')) + ', creux en ' + esc(r.moisFaible.replace(/\.$/, '')) + '. Le budget doit suivre cette courbe.</p></div>' +
+      (regs.length ? '<div class="ria-card"><b>Où ça cherche</b><table>' + regs.map(function (g) { return '<tr><td>' + esc(g.ville) + '</td><td class="n">' + nf.format(g.recherches) + '</td><td style="width:55%"><div class="ria-bar" style="width:' + Math.max(3, Math.round(g.recherches / rmax * 100)) + '%"></div></td></tr>'; }).join('') + '</table></div>' : ''));
+    // 05 à 08 : rapport complet
+    if (!unlocked) {
+      h += sec('05', 'Concurrents', verrou('Qui capte les recherches de votre secteur, et sur quels mots-clés.'));
+      h += sec('06', 'Ce que je remarque', verrou('Les observations et recommandations pour votre compte.'));
+      h += sec('07', 'Budget indicatif', verrou('Le budget conseillé par campagne, avec l’ajustement saisonnier.'));
+    } else {
+      var cs = r.concurrents || [];
+      h += sec('05', 'Concurrents', '<div class="ria-card">' + (cs.length ? '<table><tr><th>Concurrent</th><th>Recherche principale</th><th class="n">Recherches par mois</th></tr>' +
+        cs.map(function (c) { return '<tr><td><b>' + esc(c.nom) + '</b></td><td>' + esc(c.motCle) + '</td><td class="n">' + nf.format(c.recherches) + '</td></tr>'; }).join('') + '</table>' : '<p>Aucun concurrent n’a imposé son nom dans les recherches du secteur : le terrain est ouvert.</p>') +
+        (p.concurrents_attendus ? '<p class="ria-note">Concurrents directs à surveiller : ' + esc(p.concurrents_attendus) + '. Leurs annonces actives se vérifient dans le Centre de transparence des annonces de Google.</p>' : '') + '</div>');
+      if (!redac) {
+        h += sec('06', 'Ce que je remarque', '<div class="ria-card"><p class="ria-note">Rédaction des recommandations en cours…</p></div>');
+        h += sec('07', 'Budget indicatif', '<div class="ria-card"><p class="ria-note">Calcul en cours…</p></div>');
+      } else if (redac.erreur) {
+        h += sec('06', 'Ce que je remarque', '<div class="ria-card"><p class="ria-note">Les recommandations n’ont pas pu être rédigées. Réservez un appel : on vous les présente de vive voix.</p></div>');
+      } else {
+        h += sec('06', 'Ce que je remarque', '<div class="ria-card"><ul>' + redac.observations.map(function (o) { return '<li><b>' + esc(o.titre) + '</b> ' + esc(o.texte) + '</li>'; }).join('') +
+          (redac.negatifs.length ? '<li><b>Mots-clés négatifs dès le départ :</b> ' + esc(redac.negatifs.join(', ')) + '.</li>' : '') + '</ul></div>');
+        var tmin = 0, tmax = 0; redac.budget.forEach(function (b) { tmin += b.min; tmax += b.max; });
+        h += sec('07', 'Budget indicatif', '<div class="ria-card"><table><tr><th>Campagne</th><th class="n">Budget par mois</th><th>Ajustement saisonnier</th></tr>' +
+          redac.budget.map(function (b) { return '<tr><td>' + esc(b.campagne) + '</td><td class="n">' + nf.format(b.min) + ' – ' + nf.format(b.max) + ' $</td><td>' + esc(b.saison) + '</td></tr>'; }).join('') +
+          '<tr><td><b>Total</b></td><td class="n"><b>≈ ' + nf.format(tmin) + ' – ' + nf.format(tmax) + ' $</b></td><td></td></tr></table>' +
+          (redac.budget_note ? '<p class="ria-note">' + esc(redac.budget_note) + '</p>' : '') + '</div>');
+      }
+    }
+    // 08 · Méthode et limites
+    var en = (a.langues || {}).en;
+    h += sec('08', 'Méthode et limites', '<div class="ria-card ria-note"><p><b>Méthode :</b> le site a été lu pour comprendre le métier et les services. Google Keyword Planner a ensuite été interrogé service par service (compte gestionnaire Expert 360), et seules les recherches liées aux services ont été gardées.</p>' +
+      '<p><b>Limites :</b> les volumes sont des moyennes arrondies de Google sur 12 mois, au Québec. Les coûts par clic sont des fourchettes pour une annonce en haut de page. ' + (en ? 'Les recherches en anglais sont incluses. ' : 'Les recherches en anglais ne sont pas incluses. ') + 'L’historique Google Ads de l’entreprise, s’il existe, n’a pas été consulté. Les budgets sont des estimations à valider avec les vraies données de conversion.</p></div>');
+    h += '<p class="ria-foot">Préparé par Expert 360 · expert-360.ca</p>';
+    box.innerHTML = h;
+    Array.prototype.forEach.call(box.querySelectorAll('.ria-unlock'), function (b) { b.addEventListener('click', function () { $('unlock-fab').click(); }); });
+    if (unlocked) lancerRedaction();
+  }
+
   $('lead-form').addEventListener('submit', async function (e) {
     e.preventDefault();
     var lf = e.target, le = $('lead-error');
@@ -379,7 +483,7 @@
         : "Votre nom d'entreprise est encore peu cherché sur Google : la pub peut accélérer votre notoriété.";
       $('unlock').classList.add('done');
       $('report').hidden = false;
-      $('r-scen').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      ((data.ia && data.ia.tri) ? $('rapport-ia') : $('r-scen')).scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch (ex) {
       showError(le, "L'envoi n'a pas fonctionné. Vérifiez votre courriel et réessayez.");
     } finally { btn.disabled = false; }
