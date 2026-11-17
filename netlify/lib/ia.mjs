@@ -107,6 +107,7 @@ export function profilValide(p) {
 
 const SYSTEME_TRIER = `Tu es un analyste Google Ads senior au Québec. On te donne le profil d'une entreprise et une liste numérotée de recherches Google (avec leur volume mensuel).
 Garde uniquement les recherches qu'un client potentiel de CETTE entreprise ferait pour acheter un de SES services.
+Rejette aussi un terme large très recherché qui mélange surtout des intentions de bricolage ou d'achat de produit (ex. « pieux vissés » pour un patio, « vide sanitaire » pour l'isolation), sauf si la recherche précise le service de l'entreprise (ex. « pieux fondation maison »).
 Rejette : les produits vendus en magasin ou à faire soi-même, les homonymes et sens parasites, les recherches d'emploi ou de définition, les autres secteurs, les recherches trop vagues pour être liées au métier, les noms de marques.
 On te donne aussi une liste de noms repérés par Google comme marques : indique lesquels sont de vrais concurrents (entreprises qui vendent le même service), et non des magasins, des organismes publics, des fabricants de produits ou des médias.
 Réponds uniquement avec ce JSON, sans aucune explication ni texte autour, en listant les numéros des recherches À REJETER : {"rejeter":[numéros],"concurrents":["noms exacts"]}`;
