@@ -489,6 +489,7 @@ export default async (req) => {
     const cands = all.filter((k) => !isBrand(k) && !isCompetitorSearch(k)).sort((a, b) => b.volume - a.volume).slice(0, 220);
     const restant = Math.min(12000, 20000 - (Date.now() - t0));
     try {
+      ia.budget = restant;
       if (restant < 2000) throw new Error("temps");
       const tri = await trierMotsCles({ profil, mots: cands, marques: [...compMap.keys()].slice(0, 40), timeoutMs: restant });
       const gardes = cands.filter((k, i) => tri.garder.has(i));
@@ -502,6 +503,8 @@ export default async (req) => {
       }
     } catch (e) {
       console.error("analyse:tri", site.host, String(e.message || e));
+      ia.erreur = String(e.name === "AbortError" ? "delai" : (e.message || e)).slice(0, 160);
+      ia.ms = Date.now() - t0;
     }
   }
   if (!market.length) {
