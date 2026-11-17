@@ -51,8 +51,9 @@ Ta tâche : comprendre son métier comme le ferait un expert humain, puis prépa
 Règles :
 - Décris ce que l'entreprise VEND réellement, pas les mots de son slogan ni les rubriques de son site (contact, blogue, carrière, adresse, confidentialité).
 - Liste chaque service vendu séparément, avec le vocabulaire qu'un client québécois taperait dans Google (ex. « drain français », « réparation fissure fondation », « formation licence RBQ »).
-- Au plus 8 services. Pour chaque service, propose 3 à 4 recherches en français, avec une intention d'achat (service, prix, soumission, ville), et 2 recherches en anglais si le site a une clientèle anglophone.
-- Une recherche doit toujours être liée au secteur : jamais un mot seul ambigu (« acquisition », « sécurité », « pyrite » seul, « fondation » seul).
+- Au plus 8 services. Pour chaque service, donne 3 à 4 recherches COURTES en français (2 à 3 mots), le terme principal tel qu'un client le tape, sans ville ni prix : ex. « drain français », « fissure fondation », « réparation fondation », « licence rbq », « photographe drone ». Keyword Planner élargira lui-même vers les variantes (prix, ville, soumission).
+- Donne aussi 2 recherches courtes en anglais (ex. « foundation repair », « french drain ») si le site a une version anglaise ou une clientèle anglophone.
+- Une recherche doit toujours être liée au secteur : jamais un mot seul ambigu (« acquisition », « sécurité », « pyrite » seul, « fondation » seul). Préfère le vocabulaire courant du client au jargon du site.
 - Liste les sens parasites à exclure : produits vendus en quincaillerie, travaux à faire soi-même, homonymes (ex. « fondation » au sens d'organisme de charité), emplois, définitions.
 - N'invente rien : si le site ne le dit pas, laisse le champ vide.
 - Sois bref : chaque texte en quelques mots, au plus 8 éléments dans « exclure ».
