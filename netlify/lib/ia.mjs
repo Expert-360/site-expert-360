@@ -118,7 +118,7 @@ async function trierLot({ resume, mots, decalage, marques, timeoutMs }) {
     model: MODELE_TRIER,
     system: SYSTEME_TRIER,
     user: `${resume}\n\nRecherches :\n${liste}\n\nMarques repérées : ${marques.join(" ; ") || "aucune"}`,
-    maxTokens: 1200,
+    maxTokens: 4000,
     timeoutMs,
   });
   if (!Array.isArray(r.rejeter)) throw new Error("ia:format");
@@ -135,9 +135,14 @@ Services : ${profil.services.map((s) => s.nom).join(" ; ")}.
 À exclure : ${profil.exclure.join(" ; ") || "—"}.`;
   const lots = [];
   for (let i = 0; i < mots.length; i += 50) lots.push(trierLot({ resume, mots: mots.slice(i, i + 50), decalage: i, marques: i === 0 ? marques : [], timeoutMs }));
-  const res = await Promise.all(lots);
-  const rejeter = new Set(res.flatMap((r) => r.rejeter));
-  const garder = new Set(mots.map((_, i) => i).filter((i) => !rejeter.has(i)));
-  const concurrents = new Set(res.flatMap((r) => r.concurrents).map((x) => String(x).toLowerCase().trim()));
-  return { garder, concurrents };
+  const res = await Promise.allSettled(lots);
+  if (res.every((r) => r.status === "rejected")) throw res[0].reason;
+  // Un paquet en échec : ses recherches ne sont pas jugées (incertaines), l'appelant décide.
+  const incertains = new Set();
+  res.forEach((r, j) => { if (r.status === "rejected") for (let i = j * 50; i < Math.min(mots.length, j * 50 + 50); i++) incertains.add(i); });
+  const ok = res.filter((r) => r.status === "fulfilled").map((r) => r.value);
+  const rejeter = new Set(ok.flatMap((r) => r.rejeter));
+  const garder = new Set(mots.map((_, i) => i).filter((i) => !rejeter.has(i) && !incertains.has(i)));
+  const concurrents = new Set(ok.flatMap((r) => r.concurrents).map((x) => String(x).toLowerCase().trim()));
+  return { garder, concurrents, incertains };
 }

@@ -492,14 +492,16 @@ export default async (req) => {
       ia.budget = restant;
       if (restant < 2000) throw new Error("temps");
       const tri = await trierMotsCles({ profil, mots: cands, marques: [...compMap.keys()].slice(0, 40), timeoutMs: restant });
-      const gardes = cands.filter((k, i) => tri.garder.has(i));
+      const ancien = new Set(market);
+      const gardes = cands.filter((k, i) => tri.garder.has(i) || (tri.incertains.has(i) && ancien.has(k)));
+      if (tri.incertains.size) ia.incertains = tri.incertains.size;
       if (gardes.length >= 3) {
         market = gardes.sort((a, b) => b.volume - a.volume);
         concurrents = concurrents.filter((c) => tri.concurrents.has(c.nom.toLowerCase()));
         ia.tri = true;
         ia.gardes = gardes.length;
         ia.rejetes = cands.length - gardes.length;
-        ia.volumeRejete = cands.filter((k, i) => !tri.garder.has(i)).reduce((t, k) => t + k.volume, 0);
+        ia.volumeRejete = cands.filter((k) => !gardes.includes(k)).reduce((t, k) => t + k.volume, 0);
       }
     } catch (e) {
       console.error("analyse:tri", site.host, String(e.message || e));
