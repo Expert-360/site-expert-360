@@ -1,4 +1,0 @@
-comprendre dronenetwork.ca 200 7.868591s
-analyse dronenetwork.ca 200 12.113137s
-comprendre bissonexpert.com 200 7.471163s
-analyse bissonexpert.com 200 14.281666s
