@@ -26,8 +26,8 @@ async function appelClaude({ model, system, user, maxTokens = 1500, timeoutMs = 
     const j = await r.json();
     const txt = (j.content || []).filter((c) => c.type === "text").map((c) => c.text).join("");
     const m = txt.match(/\{[\s\S]*\}/);
-    if (!m) throw new Error("ia:json");
-    return JSON.parse(m[0]);
+    if (!m) throw new Error("ia:json:" + (j.stop_reason || ""));
+    try { return JSON.parse(m[0]); } catch (e) { throw new Error("ia:json:" + (j.stop_reason || "") + ":" + e.message); }
   } finally {
     clearTimeout(t);
   }
@@ -51,10 +51,11 @@ Ta tâche : comprendre son métier comme le ferait un expert humain, puis prépa
 Règles :
 - Décris ce que l'entreprise VEND réellement, pas les mots de son slogan ni les rubriques de son site (contact, blogue, carrière, adresse, confidentialité).
 - Liste chaque service vendu séparément, avec le vocabulaire qu'un client québécois taperait dans Google (ex. « drain français », « réparation fissure fondation », « formation licence RBQ »).
-- Pour chaque service, propose 3 à 6 recherches en français, avec une intention d'achat (service, prix, soumission, ville), et 2 à 3 recherches en anglais si le site a une clientèle anglophone.
+- Au plus 8 services. Pour chaque service, propose 3 à 4 recherches en français, avec une intention d'achat (service, prix, soumission, ville), et 2 recherches en anglais si le site a une clientèle anglophone.
 - Une recherche doit toujours être liée au secteur : jamais un mot seul ambigu (« acquisition », « sécurité », « pyrite » seul, « fondation » seul).
 - Liste les sens parasites à exclure : produits vendus en quincaillerie, travaux à faire soi-même, homonymes (ex. « fondation » au sens d'organisme de charité), emplois, définitions.
 - N'invente rien : si le site ne le dit pas, laisse le champ vide.
+- Sois bref : chaque texte en quelques mots, au plus 8 éléments dans « exclure ».
 
 Réponds uniquement en JSON, sans texte autour :
 {"entreprise":"","metier":"libellé court du métier","secteur":"","clientele":"","zone":"","atouts":[""],
@@ -67,7 +68,7 @@ export async function comprendreSite({ host, pages, timeoutMs = 9000 }) {
     model: MODELE_COMPRENDRE,
     system: SYSTEME_COMPRENDRE,
     user: `Site : ${host}\n\n${corps}`,
-    maxTokens: 1800,
+    maxTokens: 3500,
     timeoutMs,
   });
   // Nettoyage : on garde une structure sûre et bornée.
@@ -118,7 +119,7 @@ Services : ${profil.services.map((s) => s.nom).join(" ; ")}.
     model: MODELE_TRIER,
     system: SYSTEME_TRIER,
     user: `${resume}\n\nRecherches :\n${liste}\n\nMarques repérées : ${marques.join(" ; ") || "aucune"}`,
-    maxTokens: 1500,
+    maxTokens: 2500,
     timeoutMs,
   });
   const garder = new Set((Array.isArray(r.garder) ? r.garder : []).map(Number).filter((n) => Number.isInteger(n) && n >= 0 && n < mots.length));
