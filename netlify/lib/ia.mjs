@@ -172,7 +172,9 @@ Règles d'écriture :
 - Chaque observation : un titre court en gras d'idée (champ "titre") et une ou deux phrases concrètes (champ "texte"), appuyées sur les chiffres fournis. Ton direct, professionnel, sans jargon inutile, sans promesse de résultat.
 - N'invente aucun volume ni CPC : utilise seulement ceux fournis. Les montants de budget sont des estimations raisonnables à partir des CPC et volumes fournis.
 - Ne recommande pas ce que l'entreprise a déjà (voir « déjà en place »).
-- 5 observations, chacune en 2 phrases au plus. Un budget par campagne (2 à 4 campagnes, regroupant les services), avec une fourchette mensuelle et l'ajustement saisonnier. 6 à 12 mots-clés négatifs.
+- 5 observations, chacune en 2 phrases au plus.
+- Budget : un budget de DÉMARRAGE réaliste pour une PME québécoise, qui vise une part des recherches qualifiées (pas leur totalité). Calcule environ 25 à 40 % des recherches × 5 % de clics × CPC moyen, arrondis ; le total se situe d'habitude entre 1 000 et 4 000 $ par mois. Concentre le budget sur les services à fort volume ; un service à moins de 100 recherches par mois n'a pas de campagne seule.
+- Mots-clés négatifs : jamais un terme qui décrit un service de l'entreprise, ni une langue que le site sert (si le site a une version anglaise, n'exclus pas les recherches en anglais). Un budget par campagne (2 à 4 campagnes, regroupant les services), avec une fourchette mensuelle et l'ajustement saisonnier. 6 à 12 mots-clés négatifs.
 
 Réponds uniquement en JSON, sans texte autour :
 {"observations":[{"titre":"","texte":""}],"budget":[{"campagne":"","min":0,"max":0,"saison":""}],"budget_note":"","negatifs":[""]}`;
