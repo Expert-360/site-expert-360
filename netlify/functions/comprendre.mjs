@@ -30,13 +30,13 @@ export default async (req) => {
     const lues = (await Promise.all(candidats.map((h) => { const v = parseSite(h); return v ? lirePage(v, 2500).then((r) => ({ url: h, html: r.html })).catch(() => null) : null; }))).filter(Boolean);
     const pages = [{ url: accueil.final.href, texte: texteDePage(accueil.html, 5000) }]
       .concat(lues.map((p) => ({ url: p.url, texte: texteDePage(p.html, 2200) })));
-    const restant = Math.max(4000, 9500 - (Date.now() - t0));
+    const restant = Math.max(6000, 22000 - (Date.now() - t0));
     const profil = await comprendreSite({ host: site.host, pages, timeoutMs: restant });
     if (!profil.services.length) return json({ error: "metier-introuvable" }, 422);
     return json({ site: site.host, profil, anglais: Boolean(lienAnglais(accueil.html, accueil.final)), ms: Date.now() - t0 });
   } catch (e) {
     console.error("comprendre", site.host, String(e.message || e));
-    return json({ error: "comprendre-echec" }, 502);
+    return json({ error: "comprendre-echec", raison: String(e.name === "AbortError" ? "delai" : (e.message || e)).slice(0, 160), ms: Date.now() - t0 }, 502);
   }
 };
 
