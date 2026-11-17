@@ -1,0 +1,1 @@
+{"error":"comprendre-echec","raison":"ia:400:{\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"To turn thinking off on this model, send \\\"thinking\\\": {\\\"type\\\": \\\"between_tools\\\"} i","ms":736}
