@@ -44,7 +44,7 @@ export default async (req) => {
     return json({ site: site.host, profil, anglais: Boolean(lienAnglais(accueil.html, accueil.final)), ms: Date.now() - t0 });
   } catch (e) {
     console.error("comprendre", site.host, String(e.message || e));
-    return json({ error: "comprendre-echec", raison: String(e.name === "AbortError" ? "delai" : (e.message || e)).slice(0, 160), ms: Date.now() - t0 }, 502);
+    return json({ error: "comprendre-echec", raison: String(e.name === "AbortError" ? "delai" : (e.message || e)).slice(0, 400), ms: Date.now() - t0 }, 502);
   }
 };
 

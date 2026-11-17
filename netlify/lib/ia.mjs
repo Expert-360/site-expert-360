@@ -20,7 +20,7 @@ async function appelClaude({ model, system, user, maxTokens = 1500, timeoutMs = 
         "x-api-key": process.env.ANTHROPIC_API_KEY,
         "anthropic-version": "2023-06-01",
       },
-      body: JSON.stringify({ model, max_tokens: maxTokens, system, messages: [{ role: "user", content: user }], ...(process.env.AUDIT_REFLEXION === "on" ? {} : { thinking: { type: "disabled" } }) }),
+      body: JSON.stringify({ model, max_tokens: maxTokens, system, messages: [{ role: "user", content: user }], ...(process.env.AUDIT_REFLEXION === "on" ? {} : { thinking: { type: "between_tools" } }) }),
     });
     if (!r.ok) throw new Error("ia:" + r.status + ":" + (await r.text()).slice(0, 200));
     const j = await r.json();
