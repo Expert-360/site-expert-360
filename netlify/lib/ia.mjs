@@ -111,21 +111,32 @@ Rejette : les produits vendus en magasin ou à faire soi-même, les homonymes et
 On te donne aussi une liste de noms repérés par Google comme marques : indique lesquels sont de vrais concurrents (entreprises qui vendent le même service), et non des magasins, des organismes publics, des fabricants de produits ou des médias.
 Réponds uniquement avec ce JSON, sans aucune explication ni texte autour, en listant les numéros des recherches À REJETER : {"rejeter":[numéros],"concurrents":["noms exacts"]}`;
 
-export async function trierMotsCles({ profil, mots, marques, timeoutMs = 6000 }) {
-  const resume = `Entreprise : ${profil.entreprise || "?"} — métier : ${profil.metier}. Secteur : ${profil.secteur}. Clientèle : ${profil.clientele}.
-Services : ${profil.services.map((s) => s.nom).join(" ; ")}.
-À exclure : ${profil.exclure.join(" ; ") || "—"}.`;
+async function trierLot({ resume, mots, decalage, marques, timeoutMs }) {
   const liste = mots.map((k, i) => `${i}. ${k.keyword} (${k.volume})`).join("\n");
   const r = await appelClaude({
     model: MODELE_TRIER,
     system: SYSTEME_TRIER,
     user: `${resume}\n\nRecherches :\n${liste}\n\nMarques repérées : ${marques.join(" ; ") || "aucune"}`,
-    maxTokens: 2000,
+    maxTokens: 1200,
     timeoutMs,
   });
   if (!Array.isArray(r.rejeter)) throw new Error("ia:format");
-  const rejeter = new Set(r.rejeter.map(Number).filter((n) => Number.isInteger(n) && n >= 0 && n < mots.length));
+  return {
+    rejeter: r.rejeter.map(Number).filter((n) => Number.isInteger(n) && n >= 0 && n < mots.length).map((n) => n + decalage),
+    concurrents: Array.isArray(r.concurrents) ? r.concurrents : [],
+  };
+}
+
+// Tri en paquets de 50, en parallèle : plus rapide qu'une seule longue liste.
+export async function trierMotsCles({ profil, mots, marques, timeoutMs = 6000 }) {
+  const resume = `Entreprise : ${profil.entreprise || "?"} — métier : ${profil.metier}. Secteur : ${profil.secteur}. Clientèle : ${profil.clientele}.
+Services : ${profil.services.map((s) => s.nom).join(" ; ")}.
+À exclure : ${profil.exclure.join(" ; ") || "—"}.`;
+  const lots = [];
+  for (let i = 0; i < mots.length; i += 50) lots.push(trierLot({ resume, mots: mots.slice(i, i + 50), decalage: i, marques: i === 0 ? marques : [], timeoutMs }));
+  const res = await Promise.all(lots);
+  const rejeter = new Set(res.flatMap((r) => r.rejeter));
   const garder = new Set(mots.map((_, i) => i).filter((i) => !rejeter.has(i)));
-  const concurrents = new Set((Array.isArray(r.concurrents) ? r.concurrents : []).map((x) => String(x).toLowerCase().trim()));
+  const concurrents = new Set(res.flatMap((r) => r.concurrents).map((x) => String(x).toLowerCase().trim()));
   return { garder, concurrents };
 }
