@@ -13,7 +13,7 @@ jobs:
       - run: |
           sleep 100
           mkdir -p out
-          for s in bissonexpert.com; do
+          for s in bissonexpert.com apecq.org; do
             curl -sS -m 60 -X POST https://expert-360.ca/api/comprendre -H 'Content-Type: application/json' -H 'Origin: https://expert-360.ca' -d "{\"url\":\"$s\"}" -o out/c-$s.json -w "comprendre $s %{http_code} %{time_total}s\n" | tee -a out/codes.txt || true
             jq -c --arg u "$s" '{url:$u, profil:.profil}' out/c-$s.json > body.json || echo '{}' > body.json
             curl -sS -m 60 -X POST https://expert-360.ca/api/analyse -H 'Content-Type: application/json' -d @body.json -o out/a-$s.json -w "analyse $s %{http_code} %{time_total}s\n" | tee -a out/codes.txt || true
