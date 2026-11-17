@@ -11,9 +11,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: |
+          sleep 100
           mkdir -p out
-          curl -sS -m 60 -X POST https://expert-360.ca/api/comprendre -H 'Content-Type: application/json' -H 'Origin: https://expert-360.ca' -d '{"url":"dronenetwork.ca"}' -o out/comprendre.json -w "comprendre %{http_code} %{time_total}s\n" | tee out/codes.txt || true
-          curl -sS -m 20 https://expert-360.ca/audit.js -o out/audit.js -w "auditjs %{http_code}\n" | tee -a out/codes.txt || true
+          for s in dronenetwork.ca bissonexpert.com; do
+            curl -sS -m 60 -X POST https://expert-360.ca/api/comprendre -H 'Content-Type: application/json' -H 'Origin: https://expert-360.ca' -d "{\"url\":\"$s\"}" -o out/c-$s.json -w "comprendre $s %{http_code} %{time_total}s\n" | tee -a out/codes.txt || true
+            jq -c --arg u "$s" '{url:$u, profil:.profil}' out/c-$s.json > body.json || echo '{}' > body.json
+            curl -sS -m 60 -X POST https://expert-360.ca/api/analyse -H 'Content-Type: application/json' -d @body.json -o out/a-$s.json -w "analyse $s %{http_code} %{time_total}s\n" | tee -a out/codes.txt || true
+          done
       - run: |
           git config user.name audit-bot && git config user.email audit-bot@users.noreply.github.com
           git add out && git commit -m "résultats [skip ci]" && git push
