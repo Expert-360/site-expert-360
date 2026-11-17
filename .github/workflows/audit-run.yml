@@ -12,12 +12,8 @@ jobs:
       - uses: actions/checkout@v4
       - run: |
           mkdir -p out
-          jq -c '.[]' requests.json | while read -r r; do
-            id=$(echo "$r" | jq -r .id)
-            body=$(echo "$r" | jq -c '{url, metier}')
-            curl -sS -m 120 -X POST https://expert-360.ca/api/analyse -H 'Content-Type: application/json' -d "$body" -o "out/$id.json" -w "$id %{http_code}\n" || true
-            sleep 3
-          done
+          curl -sS -m 60 -X POST https://expert-360.ca/api/comprendre -H 'Content-Type: application/json' -H 'Origin: https://expert-360.ca' -d '{"url":"dronenetwork.ca"}' -o out/comprendre.json -w "comprendre %{http_code} %{time_total}s\n" | tee out/codes.txt || true
+          curl -sS -m 20 https://expert-360.ca/audit.js -o out/audit.js -w "auditjs %{http_code}\n" | tee -a out/codes.txt || true
       - run: |
           git config user.name audit-bot && git config user.email audit-bot@users.noreply.github.com
           git add out && git commit -m "résultats [skip ci]" && git push
