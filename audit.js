@@ -327,8 +327,6 @@
     var modeIA = Boolean(data.ia && data.ia.tri);
     result.classList.toggle('mode-ia', modeIA);
     if (modeIA) {
-      $('r-title').textContent = 'Audit Google Ads : ' + data.site;
-      $('r-site').textContent = data.site;
       renderIA();
     }
     $('r-site').textContent = data.site;
@@ -366,6 +364,7 @@
     f.namedItem('recherches').value = a.recherchesMois; f.namedItem('cpc').value = a.cpcMoyen;
     f.namedItem('concurrence').value = a.concurrence;
     f.namedItem('metier').value = (data.metier || []).slice(0, 6).join(', ');
+    if (modeIA) $('r-title').textContent = 'Audit Google Ads : ' + data.site;
   }
 
 
@@ -412,7 +411,7 @@
       (s0 ? '<div class="ria-kpi"><b>≈ ' + nf.format(s0.volume) + '</b><small>pour « ' + esc(s0.nom) + ' », le plus gros volume</small></div>' : '') +
       '<div class="ria-kpi"><b>' + money(a.cpcMoyen) + '</b><small>coût par clic moyen, concurrence ' + esc(a.concurrence.toLowerCase()) + '</small></div>' +
       '<div class="ria-kpi"><b>' + nf.format(r.recherchesMarque || 0) + '</b><small>recherches sur la marque</small></div></div>' +
-      '<div class="ria-card"><table><tr><th>Service</th><th class="n">Recherches par mois</th><th>Exemples de recherches</th></tr>' +
+      '<div class="ria-card"><table><tr><th>Service</th><th class="n">Recherches par mois</th><th class="ria-ex">Exemples de recherches</th></tr>' +
       services.map(function (x) { return '<tr><td><b>' + esc(x.nom) + '</b></td><td class="n">≈ ' + nf.format(x.volume) + '</td><td class="ria-note">' + esc(x.recherches.join(', ')) + '</td></tr>'; }).join('') + '</table></div>' +
       (ia.ecartes && ia.ecartes.length ? '<div class="ria-callout"><b>Ce que l\'analyse du métier a écarté :</b> environ ' + nf.format(ia.volumeRejete) + ' recherches par mois proposées par Google n\'ont rien à voir avec les services, par exemple ' +
         ia.ecartes.slice(0, 4).map(function (k) { return '« ' + esc(k.mot) + ' » (' + nf.format(k.volume) + ')'; }).join(', ') + '. Une campagne qui les inclurait gaspillerait une partie du budget.</div>' : ''));
