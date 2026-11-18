@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: |
-          sleep 100
+          sleep 170
           mkdir -p out
           for s in dronenetwork.ca; do
             curl -sS -m 60 -X POST https://expert-360.ca/api/comprendre -H 'Content-Type: application/json' -H 'Origin: https://expert-360.ca' -d "{\"url\":\"$s\"}" -o out/c-$s.json -w "comprendre $s %{http_code} %{time_total}s\n" | tee -a out/codes.txt || true

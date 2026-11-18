@@ -1,3 +1,0 @@
-comprendre dronenetwork.ca 200 9.944971s
-analyse dronenetwork.ca 200 6.449248s
-rediger dronenetwork.ca 200 10.502565s
