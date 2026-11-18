@@ -1,7 +1,0 @@
-audit.js?v=17
-age: 0
-cache-control: public,max-age=0,must-revalidate
-date: Wed, 18 Nov 2026 17:43:10 GMT
-strict-transport-security: max-age=31536000
-x-nf-request-id: 01M7QW2RTJWFKJZDQHH5NGNHS4
-{"zone":"Québec","vol":1550,"reg":["Montréal","Québec","Laval","Gatineau","Longueuil","Sherbrooke","Trois-Rivières","Lévis","Saguenay","Terrebonne"]}
