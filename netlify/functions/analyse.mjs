@@ -8,10 +8,6 @@ import { profilValide, trierMotsCles, iaDisponible } from "../lib/ia.mjs";
 
 const API = "https://googleads.googleapis.com/v24";
 const GEO_QUEBEC = "geoTargetConstants/20123";
-const GEO_CANADA = "geoTargetConstants/2124";
-// Zone de l'analyse, fixée par requête : Québec (par défaut) ou Canada. Une instance de fonction traite une requête à la fois.
-let ZONE = "quebec";
-const geoZone = () => (ZONE === "canada" ? GEO_CANADA : GEO_QUEBEC);
 const LANG_FR = "languageConstants/1002";
 const LANG_EN = "languageConstants/1000";
 const MOIS = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
@@ -63,7 +59,7 @@ async function keywordIdeas(token, seed, lang = LANG_FR) {
     },
     body: JSON.stringify({
       language: lang,
-      geoTargetConstants: [geoZone()],
+      geoTargetConstants: [GEO_QUEBEC],
       keywordPlanNetwork: "GOOGLE_SEARCH",
       includeAdultKeywords: false,
       keywordAnnotation: ["KEYWORD_CONCEPT"],
@@ -140,32 +136,13 @@ function brandWords(host, ideas) {
 // Villes du Québec pour la répartition régionale (codes géo résolus une fois, puis gardés en mémoire).
 const VILLES = ["Montréal", "Québec", "Laval", "Gatineau", "Longueuil", "Sherbrooke", "Trois-Rivières", "Saguenay", "Lévis", "Terrebonne"];
 let villesCache = null;
-const PROVINCES = ["Ontario", "Québec", "Colombie-Britannique", "Alberta", "Manitoba", "Saskatchewan", "Nouvelle-Écosse", "Nouveau-Brunswick", "Terre-Neuve-et-Labrador", "Île-du-Prince-Édouard"];
-let provincesCache = null;
 
 function adsHeaders(token) {
   const cid = process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID;
   return { Authorization: `Bearer ${token}`, "login-customer-id": cid, "Content-Type": "application/json" };
 }
 
-async function provincesGeo(token) {
-  if (provincesCache) return provincesCache;
-  const r = await fetch(`${API}/geoTargetConstants:suggest`, {
-    method: "POST",
-    headers: adsHeaders(token),
-    body: JSON.stringify({ locale: "fr", countryCode: "CA", locationNames: { names: PROVINCES } }),
-  });
-  if (!r.ok) throw new Error("geo:" + r.status);
-  const sugg = (await r.json()).geoTargetConstantSuggestions || [];
-  provincesCache = PROVINCES.map((nom) => {
-    const hit = sugg.find((g) => g.searchTerm === nom && g.geoTargetConstant?.targetType === "Province");
-    return hit ? { nom, geo: hit.geoTargetConstant.resourceName } : null;
-  }).filter(Boolean);
-  return provincesCache;
-}
-
 async function villesGeo(token) {
-  if (ZONE === "canada") return provincesGeo(token);
   if (villesCache) return villesCache;
   const r = await fetch(`${API}/geoTargetConstants:suggest`, {
     method: "POST",
@@ -210,7 +187,7 @@ async function appareils(token, keywords) {
     method: "POST",
     headers: adsHeaders(token),
     body: JSON.stringify({
-      keywords, geoTargetConstants: [geoZone()], keywordPlanNetwork: "GOOGLE_SEARCH",
+      keywords, geoTargetConstants: [GEO_QUEBEC], keywordPlanNetwork: "GOOGLE_SEARCH",
       aggregateMetrics: { aggregateMetricTypes: ["DEVICE"] },
     }),
   });
@@ -237,7 +214,7 @@ async function prevision(token, keywords, budgetMois) {
       forecastPeriod: { startDate: d(1), endDate: d(30) },
       campaign: {
         languageConstants: [LANG_FR, LANG_EN],
-        geoModifiers: [{ geoTargetConstant: geoZone() }],
+        geoModifiers: [{ geoTargetConstant: GEO_QUEBEC }],
         keywordPlanNetwork: "GOOGLE_SEARCH",
         biddingStrategy: { maximizeClicksBiddingStrategy: { dailyTargetSpendMicros: String(Math.round((budgetMois / 30) * 1e6)) } },
         adGroups: [{ biddedKeywords: keywords.map((text) => ({ keyword: { text, matchType: "PHRASE" } })) }],
@@ -306,7 +283,6 @@ export default async (req) => {
   const t0 = Date.now();
   // Profil du métier produit par Claude (/api/comprendre) : il guide Keyword Planner et le tri.
   const profil = iaDisponible() ? profilValide(body.profil) : null;
-  ZONE = body.zone === "canada" ? "canada" : "quebec";
 
   // 1. Le métier : ce que le site vend, lu dans son titre, sa description, ses titres et son menu.
   //    Le visiteur peut aussi le préciser lui-même (champ « metier », séparé par des virgules).
@@ -627,7 +603,6 @@ export default async (req) => {
     zone: "Québec",
     metier,
     langue: "français",
-    zone: ZONE,
     ia,
     apercu: {
       score,
