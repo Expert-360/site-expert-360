@@ -624,10 +624,9 @@ export default async (req) => {
 
   return json({
     site: site.host,
-    zone: "Québec",
+    zone: ZONE === "canada" ? "Canada" : "Québec",
     metier,
     langue: "français",
-    zone: ZONE,
     ia,
     apercu: {
       score,
