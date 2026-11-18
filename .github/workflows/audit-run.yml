@@ -15,7 +15,7 @@ jobs:
           mkdir -p out
           for s in dronenetwork.ca; do
             curl -sS -m 60 -X POST https://expert-360.ca/api/comprendre -H 'Content-Type: application/json' -H 'Origin: https://expert-360.ca' -d "{\"url\":\"$s\"}" -o out/c-$s.json -w "comprendre $s %{http_code} %{time_total}s\n" | tee -a out/codes.txt || true
-            jq -c --arg u "$s" '{url:$u, profil:.profil}' out/c-$s.json > body.json || echo '{}' > body.json
+            jq -c --arg u "$s" '{url:$u, profil:.profil, zone:"canada"}' out/c-$s.json > body.json || echo '{}' > body.json
             curl -sS -m 60 -X POST https://expert-360.ca/api/analyse -H 'Content-Type: application/json' -d @body.json -o out/a-$s.json -w "analyse $s %{http_code} %{time_total}s\n" | tee -a out/codes.txt || true
             jq -c '{profil:.ia.profil, chiffres:{total:.apercu.recherchesMois, cpcMoyen:.apercu.cpcMoyen, concurrence:.apercu.concurrence, services:.ia.services, motsCles:.rapport.motsCles, ecartes:.ia.ecartes, moisFort:.rapport.moisFort, moisFaible:.rapport.moisFaible, regions:.regions, concurrents:.rapport.concurrents, marque:.rapport.recherchesMarque}}' out/a-$s.json > red.json || echo '{}' > red.json
             curl -sS -m 60 -X POST https://expert-360.ca/api/rediger -H 'Content-Type: application/json' -H 'Origin: https://expert-360.ca' -d @red.json -o out/r-$s.json -w "rediger $s %{http_code} %{time_total}s\n" | tee -a out/codes.txt || true
