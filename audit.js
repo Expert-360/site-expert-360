@@ -421,13 +421,18 @@
       (p.atouts && p.atouts.length ? '<p class="ria-note"><b>Atouts à mettre en avant dans les annonces :</b> ' + esc(p.atouts.join(' · ')) + '</p>' : '') + '</div>');
     // 02 · Le marché
     var s0 = services[0];
+    var aFort = services.some(function (x) { return x.volumeIntentionForte != null; });
+    var totSv = services.reduce(function (t, x) { return t + x.volume; }, 0), fortSv = services.reduce(function (t, x) { return t + (x.volumeIntentionForte || 0); }, 0);
+    if (aFort) s0 = services.slice().sort(function (x, y) { return (y.volumeIntentionForte || 0) - (x.volumeIntentionForte || 0); })[0];
     h += sec('02', 'Le marché sur Google', '<div class="ria-kpis">' +
-      '<div class="ria-kpi"><b>' + fourch(a.recherchesMois) + '</b><small>recherches par mois réellement liées aux services</small></div>' +
-      (s0 ? '<div class="ria-kpi"><b>' + fourch(s0.volume) + '</b><small>pour « ' + esc(s0.nom) + ' », le plus gros volume</small></div>' : '') +
+      (aFort && fortSv > 0
+        ? '<div class="ria-kpi"><b>' + fourch(fortSv) + '</b><small>recherches par mois où la personne veut engager un prestataire, sur ' + fourch(totSv) + ' liées aux services</small></div>'
+        : '<div class="ria-kpi"><b>' + fourch(a.recherchesMois) + '</b><small>recherches par mois réellement liées aux services</small></div>') +
+      (s0 ? '<div class="ria-kpi"><b>' + fourch(aFort ? (s0.volumeIntentionForte || 0) : s0.volume) + '</b><small>pour « ' + esc(s0.nom) + ' », ' + (aFort ? 'le plus gros volume à forte intention' : 'le plus gros volume') + '</small></div>' : '') +
       '<div class="ria-kpi"><b>' + money(a.cpcMoyen) + '</b><small>coût par clic moyen, concurrence ' + esc(a.concurrence.toLowerCase()) + '</small></div>' +
       '<div class="ria-kpi"><b>' + nf.format(r.recherchesMarque || 0) + '</b><small>recherches sur la marque</small></div></div>' +
-      '<div class="ria-card"><table><tr><th>Service</th><th class="n">Recherches par mois</th><th class="ria-ex">Exemples de recherches</th></tr>' +
-      services.map(function (x) { return '<tr><td><b>' + esc(x.nom) + '</b></td><td class="n">≈ ' + nf.format(x.volume) + '</td><td class="ria-note ria-ex">' + esc(x.recherches.join(', ')) + '</td></tr>'; }).join('') + '</table></div>' +
+      '<div class="ria-card"><table><tr><th>Service</th><th class="n">Recherches par mois</th>' + (aFort ? '<th class="n">Dont intention forte</th>' : '') + '<th class="ria-ex">Exemples de recherches</th></tr>' +
+      services.map(function (x) { return '<tr><td><b>' + esc(x.nom) + '</b></td><td class="n">≈ ' + nf.format(x.volume) + '</td>' + (aFort ? '<td class="n"><b>≈ ' + nf.format(x.volumeIntentionForte || 0) + '</b></td>' : '') + '<td class="ria-note ria-ex">' + esc(x.recherches.join(', ')) + '</td></tr>'; }).join('') + '</table></div>' +
       (ia.ecartes && ia.ecartes.length ? '<div class="ria-callout"><b>Ce que l\'analyse du métier a écarté :</b> environ ' + nf.format(ia.volumeRejete) + ' recherches par mois proposées par Google n\'ont rien à voir avec les services, par exemple ' +
         ia.ecartes.slice(0, 4).map(function (k) { return '« ' + esc(k.mot) + ' » (' + nf.format(k.volume) + ')'; }).join(', ') + '. Une campagne qui les inclurait gaspillerait une partie du budget.</div>' : ''));
     // 03 · Les recherches principales

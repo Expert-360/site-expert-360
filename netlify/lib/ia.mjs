@@ -142,6 +142,7 @@ Garde seulement :
 - une recherche qui mêle un service et un lieu (ex. « forage Boucherville », « déménageur Montréal ») : le lieu est utile s'il accompagne un service.
 Les variantes d'une même recherche (accents, singulier/pluriel, anglais/français : « scie à béton », « scie a beton », « sciage de béton ») reçoivent la même décision.
 Rejette aussi les recherches « gratuit », « free », « gratuite », « modèle », « template », « générateur » ou « outil en ligne » : elles cherchent un outil ou un produit sans payer, pas un prestataire, et Google Ads vise des clients prêts à acheter.
+Test du même service : une recherche n'appartient à un service que si la personne veut CE que l'entreprise offre (même produit, même situation, même type de client). Un mot proche mais pour un autre objet, un autre usage ou une variante que l'entreprise n'offre pas (intérieur plutôt qu'extérieur, version synthétique plutôt que naturelle, matériau seul plutôt que la pose) est rejeté, même si le mot principal est le même. Ce test vaut pour tous les métiers.
 Rejette toujours :
 - une recherche qui n'est qu'un lieu, une ville, un commerce ou un service public (ex. « Boucherville », « hôtel de ville », « hôtel », « restaurant ») : elle n'exprime aucun besoin lié aux services de l'entreprise ;
 - les produits vendus en magasin ou à faire soi-même, les homonymes et sens parasites, les recherches d'emploi, de définition ou de formation générale, les autres secteurs, les recherches trop vagues pour être liées au métier, les noms de marques ;
