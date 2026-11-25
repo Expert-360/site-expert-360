@@ -33,10 +33,16 @@ export default async (req) => {
     // Pages de services liées depuis l'accueil (sous-pages d'un menu « Services » incluses).
     const sous = [...accueil.html.matchAll(/href=["']([^"'#]+)["']/gi)].map((m) => { try { return new URL(m[1], accueil.final).href; } catch { return null; } })
       .filter((h) => h && memeSite(h) && /(services?|expertises?|solutions?|prestations|nos-services|formations?)\/[^/]+/i.test(h));
-    const candidats = [...new Set([...liens, ...sous])].slice(0, 6);
-    const lues = (await Promise.all(candidats.map((h) => { const v = parseSite(h); return v ? lirePage(v, 2500).then((r) => ({ url: h, html: r.html })).catch(() => null) : null; }))).filter(Boolean);
+    const lire1 = (h, n = 2500) => { const v = parseSite(h); return v ? lirePage(v, n).then((r) => ({ url: h, html: r.html, final: r.final })).catch(() => null) : null; };
+    const premieres = (await Promise.all([...new Set([...liens, ...sous])].slice(0, 6).map((h) => lire1(h)))).filter(Boolean);
+    // Pages de détail : liens d'une page « Services » vers chaque service (ex. /services/branding/), lues une à une.
+    const dejaLues = new Set(premieres.map((p) => p.url));
+    const details = [...new Set(premieres.flatMap((p) => [...p.html.matchAll(/href=["']([^"'#]+)["']/gi)].map((m) => { try { return new URL(m[1], p.final || accueil.final).href; } catch { return null; } })))]
+      .filter((h) => h && memeSite(h) && !dejaLues.has(h) && /(services?|expertises?|solutions?|prestations|nos-services|conception|formations?)\/[^/]+/i.test(h) && !/\.(jpg|png|pdf|svg|webp)(\?|$)/i.test(h)).slice(0, 8);
+    const plus = (await Promise.all(details.map((h) => lire1(h, 2500)))).filter(Boolean);
+    const lues = premieres.concat(plus).slice(0, 12);
     const pages = [{ url: accueil.final.href, texte: texteDePage(accueil.html, 5000) }]
-      .concat(lues.map((p) => ({ url: p.url, texte: texteDePage(p.html, 2200) })));
+      .concat(lues.map((p) => ({ url: p.url, texte: texteDePage(p.html, 1500) })));
     const restant = Math.max(6000, 22000 - (Date.now() - t0));
     const profil = await comprendreSite({ host: site.host, pages, timeoutMs: restant });
     if (!profil.services.length) return json({ error: "metier-introuvable" }, 422);

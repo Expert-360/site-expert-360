@@ -68,6 +68,10 @@
       }
       var out = await Promise.all([post('/api/analyse', { url: url, metier: metier, profil: profil }), animateSteps()]);
       var res = out[0];
+      // Le tri IA a manqué de temps : on réessaie une fois plutôt que d'afficher un rapport dégradé.
+      if (IA && profil && res.ok && res.j && !res.j.empty && !(res.j.ia && res.j.ia.tri)) {
+        try { var res2 = await post('/api/analyse', { url: url, metier: metier, profil: profil }); if (res2.ok && res2.j && res2.j.ia && res2.j.ia.tri) res = res2; } catch (e) {}
+      }
       if (!res.ok) throw new Error(res.j.error || 'Erreur');
       if (res.j.empty) throw new Error(res.j.message);
       data = res.j; redac = null; redacEnCours = false;

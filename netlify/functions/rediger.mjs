@@ -25,7 +25,7 @@ export default async (req) => {
       recherchesQualifieesParMois: n(c.total),
       cpcMoyen: n(c.cpcMoyen),
       concurrence: t(c.concurrence, 20),
-      parService: (Array.isArray(c.services) ? c.services : []).slice(0, 10).map((s) => ({ service: t(s.nom), volume: n(s.volume) })),
+      parService: (Array.isArray(c.services) ? c.services : []).slice(0, 10).map((s) => ({ service: t(s.nom), volume: n(s.volume), volumeIntentionForte: n(s.volumeIntentionForte) })),
       recherchesPrincipales: (Array.isArray(c.motsCles) ? c.motsCles : []).slice(0, 15).map((k) => ({ mot: t(k.mot), volume: n(k.volume), cpcBas: n(k.cpcBas), cpcHaut: n(k.cpcHaut), concurrence: t(k.concurrence, 12) })),
       recherchesEcartees: (Array.isArray(c.ecartes) ? c.ecartes : []).slice(0, 6).map((k) => ({ mot: t(k.mot), volume: n(k.volume) })),
       moisFort: t(c.moisFort, 10), moisFaible: t(c.moisFaible, 10),

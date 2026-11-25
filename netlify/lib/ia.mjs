@@ -85,7 +85,7 @@ Réponds uniquement en JSON, sans texte autour :
  "exclure":["sens ou mots à exclure"],"concurrents_attendus":"type d'entreprises concurrentes réelles"}`;
 
 export async function comprendreSite({ host, pages, timeoutMs = 9000 }) {
-  const corps = pages.map((p) => `### Page : ${p.url}\n${p.texte}`).join("\n\n").slice(0, 16000);
+  const corps = pages.map((p) => `### Page : ${p.url}\n${p.texte}`).join("\n\n").slice(0, 22000);
   const p = await appelClaude({
     model: MODELE_COMPRENDRE,
     system: SYSTEME_COMPRENDRE,
@@ -140,7 +140,8 @@ Pour chaque recherche, pose-toi UNE seule question : « la personne qui tape ça
 Garde seulement :
 - une recherche qui nomme un service du profil, ou le besoin précis que ce service règle ;
 - une recherche qui mêle un service et un lieu (ex. « forage Boucherville », « déménageur Montréal ») : le lieu est utile s'il accompagne un service.
-Une recherche liée à un service du profil reste gardée même avec « gratuit », « free », « prix », « modèle » ou « générateur » (ex. « création de logo gratuite », « créer un site web gratuit ») : c'est un intérêt réel pour le service, qu'on traitera ensuite avec des mots-clés négatifs. Des variantes de la même recherche (accents, singulier/pluriel, anglais/français : « scie à béton », « scie a beton », « sciage de béton ») reçoivent la même décision.
+Les variantes d'une même recherche (accents, singulier/pluriel, anglais/français : « scie à béton », « scie a beton », « sciage de béton ») reçoivent la même décision.
+Rejette aussi les recherches « gratuit », « free », « gratuite », « modèle », « template », « générateur » ou « outil en ligne » : elles cherchent un outil ou un produit sans payer, pas un prestataire, et Google Ads vise des clients prêts à acheter.
 Rejette toujours :
 - une recherche qui n'est qu'un lieu, une ville, un commerce ou un service public (ex. « Boucherville », « hôtel de ville », « hôtel », « restaurant ») : elle n'exprime aucun besoin lié aux services de l'entreprise ;
 - les produits vendus en magasin ou à faire soi-même, les homonymes et sens parasites, les recherches d'emploi, de définition ou de formation générale, les autres secteurs, les recherches trop vagues pour être liées au métier, les noms de marques ;
@@ -148,7 +149,8 @@ Rejette toujours :
 Un mot ou une recherche en anglais se juge de la même façon qu'un mot français.
 On te donne aussi une liste de noms repérés par Google comme marques : indique lesquels sont de vrais concurrents (entreprises qui vendent le même service), et non des magasins, des organismes publics, des fabricants de produits ou des médias.
 Pour chaque recherche, dans l'ordre, donne le numéro du service de l'entreprise auquel elle correspond (services numérotés à partir de 0), ou -1 pour la rejeter.
-Réponds uniquement avec ce JSON, sans aucune explication ni texte autour : {"s":[un nombre par recherche],"concurrents":["noms exacts"]}`;
+Pour chaque recherche gardée, donne aussi son intention : 2 = la personne veut clairement engager un prestataire ou acheter ce service (nomme le prestataire ou le service, prix, devis, « près de moi », ville, urgence) ; 1 = intérêt réel mais plus flou ou plus tôt dans la réflexion (terme général du domaine, question « comment », comparaison). Pour une recherche rejetée, mets 0. Ce critère est le même pour tous les métiers.
+Réponds uniquement avec ce JSON, sans aucune explication ni texte autour : {"s":[un nombre par recherche],"i":[un nombre 0, 1 ou 2 par recherche],"concurrents":["noms exacts"]}`;
 
 async function trierLot({ resume, mots, decalage, marques, timeoutMs }) {
   const liste = mots.map((k, i) => `${i}. ${k.keyword} (${k.volume})`).join("\n");
@@ -161,8 +163,12 @@ async function trierLot({ resume, mots, decalage, marques, timeoutMs }) {
   });
   if (!Array.isArray(r.s)) throw new Error("ia:format");
   const service = new Map();
-  mots.forEach((_, i) => { const n = Number(r.s[i]); service.set(i + decalage, Number.isInteger(n) ? n : -1); });
-  return { service, concurrents: Array.isArray(r.concurrents) ? r.concurrents : [] };
+  const intention = new Map();
+  mots.forEach((_, i) => {
+    const n = Number(r.s[i]); service.set(i + decalage, Number.isInteger(n) ? n : -1);
+    const v = Array.isArray(r.i) ? Number(r.i[i]) : NaN; intention.set(i + decalage, v === 2 ? 2 : 1);
+  });
+  return { service, intention, concurrents: Array.isArray(r.concurrents) ? r.concurrents : [] };
 }
 
 // Tri en paquets de 50, en parallèle : plus rapide qu'une seule longue liste.
@@ -179,10 +185,11 @@ Services : ${profil.services.map((s, i) => i + ". " + s.nom).join(" ; ")}.
   res.forEach((r, j) => { if (r.status === "rejected") for (let i = j * 50; i < Math.min(mots.length, j * 50 + 50); i++) incertains.add(i); });
   const ok = res.filter((r) => r.status === "fulfilled").map((r) => r.value);
   const service = new Map(ok.flatMap((r) => [...r.service]));
+  const intention = new Map(ok.flatMap((r) => [...r.intention]));
   const nS = profil.services.length;
   const garder = new Set(mots.map((_, i) => i).filter((i) => !incertains.has(i) && service.has(i) && service.get(i) >= 0 && service.get(i) < nS));
   const concurrents = new Set(ok.flatMap((r) => r.concurrents).map((x) => String(x).toLowerCase().trim()));
-  return { garder, concurrents, incertains, service };
+  return { garder, concurrents, incertains, service, intention };
 }
 
 // Rédaction des sections « Ce que je remarque » et « Budget indicatif », à partir des chiffres de Google
@@ -200,6 +207,7 @@ Bonnes pratiques d'Expert 360 à appliquer :
 
 Règles d'écriture :
 - Chaque observation : un titre court en gras d'idée (champ "titre") et une ou deux phrases concrètes (champ "texte"), appuyées sur les chiffres fournis. Ton direct, professionnel, sans jargon inutile, sans promesse de résultat.
+- Pour chaque service, « volumeIntentionForte » est la part du volume où la personne veut clairement engager un prestataire. Si elle est bien inférieure au volume du service, dis-le : le potentiel réel est plus petit que le chiffre brut, et budgète sur la part forte.
 - N'invente aucun volume ni CPC : utilise seulement ceux fournis. Les montants de budget sont des estimations raisonnables à partir des CPC et volumes fournis.
 - Ne recommande pas ce que l'entreprise a déjà (voir « déjà en place »).
 - 5 observations, chacune en 2 phrases au plus.

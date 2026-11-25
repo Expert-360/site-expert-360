@@ -518,7 +518,8 @@ export default async (req) => {
         // Volumes par service (recherches retenues), et exemples de recherches écartées.
         ia.services = profil.services.map((sv, n) => {
           const ks = cands.filter((k, i) => tri.garder.has(i) && tri.service.get(i) === n).sort((x, y) => y.volume - x.volume);
-          return { nom: sv.nom, volume: ks.reduce((t, k) => t + k.volume, 0), recherches: ks.slice(0, 4).map((k) => k.keyword) };
+          const idx = (k) => cands.indexOf(k);
+          return { nom: sv.nom, volume: ks.reduce((t, k) => t + k.volume, 0), volumeIntentionForte: ks.filter((k) => tri.intention.get(idx(k)) === 2).reduce((t, k) => t + k.volume, 0), recherches: ks.slice(0, 4).map((k) => k.keyword) };
         }).filter((x) => x.volume > 0).sort((x, y) => y.volume - x.volume);
         const horsSujet = cands.filter((k) => !gardes.includes(k)).concat(filtre.ecartes);
         ia.rejetes += filtre.ecartes.length;
