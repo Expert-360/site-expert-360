@@ -71,11 +71,15 @@
       if (!res.ok) throw new Error(res.j.error || 'Erreur');
       if (res.j.empty) throw new Error(res.j.message);
       data = res.j; redac = null; redacEnCours = false;
+      // Phase de test (?ia=1) : le rapport s'affiche en entier, sans demander de courriel.
+      var ouvert = Boolean(IA && data.ia && data.ia.tri);
+      unlocked = ouvert;
+      if (ouvert) $('unlock').classList.add('done');
       await wait(300);
       progress.hidden = true;
       render();
       result.hidden = false;
-      $('unlock-fab').hidden = false;
+      $('unlock-fab').hidden = ouvert;
       result.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch (ex) {
       progress.hidden = true;
@@ -373,6 +377,13 @@
   var redac = null, redacEnCours = false;
   function tag(c) { var k = c === 'Faible' ? 'f' : c === 'Moyenne' ? 'm' : 'e'; return '<span class="ria-tag ria-' + k + '">' + esc(c) + '</span>'; }
   function cpcR(k) { return k.cpcBas !== null && k.cpcBas !== undefined ? money(k.cpcBas) + ' – ' + money(k.cpcHaut) : '—'; }
+  // Volume en fourchette : Google donne des moyennes arrondies, une fourchette est plus honnête qu'un chiffre précis.
+  function sig2(n) { if (n < 100) return Math.round(n / 5) * 5; var d = Math.pow(10, Math.floor(Math.log10(n)) - 1); return Math.round(n / d) * d; }
+  function fourch(n) {
+    n = Number(n) || 0; if (n <= 0) return '0';
+    var bas = sig2(n * 0.9), haut = sig2(n * 1.1); if (haut <= bas) haut = bas + (n < 100 ? 5 : 0);
+    return nf.format(bas) + ' – ' + nf.format(haut);
+  }
   function sec(n, titre, corps) { return '<h3 class="ria-h"><span>' + n + '</span>' + esc(titre) + '</h3>' + corps; }
   function verrou(titre) {
     return '<div class="ria-card ria-lock"><p>' + esc(titre) + '</p><p class="ria-blur">■■■■■■■■■■ ■■■■■■ ■■■■■■■■■■■■ ■■■■■■■ ■■■■■■■■■ ■■■■■■■■■■■■■■ ■■■■■ ■■■■■■■■■■</p>' +
@@ -387,7 +398,7 @@
     if (redac || redacEnCours || !data || !data.ia) return;
     redacEnCours = true;
     try {
-      var r = await post('/api/rediger', { profil: data.ia.profil, chiffres: chiffresPourRedaction() });
+      var r = await post('/api/rediger', { profil: data.ia.profil, chiffres: chiffresPourRedaction(), site: data.site });
       redac = r.ok ? r.j : { erreur: true };
     } catch (e) { redac = { erreur: true }; }
     redacEnCours = false;
@@ -407,8 +418,8 @@
     // 02 · Le marché
     var s0 = services[0];
     h += sec('02', 'Le marché sur Google', '<div class="ria-kpis">' +
-      '<div class="ria-kpi"><b>≈ ' + nf.format(a.recherchesMois) + '</b><small>recherches par mois réellement liées aux services</small></div>' +
-      (s0 ? '<div class="ria-kpi"><b>≈ ' + nf.format(s0.volume) + '</b><small>pour « ' + esc(s0.nom) + ' », le plus gros volume</small></div>' : '') +
+      '<div class="ria-kpi"><b>' + fourch(a.recherchesMois) + '</b><small>recherches par mois réellement liées aux services</small></div>' +
+      (s0 ? '<div class="ria-kpi"><b>' + fourch(s0.volume) + '</b><small>pour « ' + esc(s0.nom) + ' », le plus gros volume</small></div>' : '') +
       '<div class="ria-kpi"><b>' + money(a.cpcMoyen) + '</b><small>coût par clic moyen, concurrence ' + esc(a.concurrence.toLowerCase()) + '</small></div>' +
       '<div class="ria-kpi"><b>' + nf.format(r.recherchesMarque || 0) + '</b><small>recherches sur la marque</small></div></div>' +
       '<div class="ria-card"><table><tr><th>Service</th><th class="n">Recherches par mois</th><th class="ria-ex">Exemples de recherches</th></tr>' +
@@ -456,7 +467,8 @@
     }
     // 08 · Méthode et limites
     var en = (a.langues || {}).en;
-    h += sec('08', 'Méthode et limites', '<div class="ria-card ria-note"><p><b>Méthode :</b> le site a été lu pour comprendre le métier et les services. Google Keyword Planner a ensuite été interrogé service par service (compte gestionnaire Expert 360), et seules les recherches liées aux services ont été gardées.</p>' +
+    var memo = data.cache ? ' Analyse du ' + new Date(data.cache).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' }) + ', conservée 30 jours pour que les résultats restent comparables.' : '';
+    h += sec('08', 'Méthode et limites', '<div class="ria-card ria-note"><p><b>Zone et langues :</b> Québec, ' + esc(data.langue || 'français') + '.' + memo + '</p><p><b>Méthode :</b> le site a été lu pour comprendre le métier et les services. Google Keyword Planner a ensuite été interrogé service par service (compte gestionnaire Expert 360), et seules les recherches liées aux services ont été gardées.</p>' +
       '<p><b>Limites :</b> les volumes sont des moyennes arrondies de Google sur 12 mois, au Québec. Les coûts par clic sont des fourchettes pour une annonce en haut de page. ' + (en ? 'Les recherches en anglais sont incluses. ' : 'Les recherches en anglais ne sont pas incluses. ') + 'L’historique Google Ads de l’entreprise, s’il existe, n’a pas été consulté. Les budgets sont des estimations à valider avec les vraies données de conversion.</p></div>');
     h += '<p class="ria-foot">Préparé par Expert 360 · expert-360.ca</p>';
     box.innerHTML = h;

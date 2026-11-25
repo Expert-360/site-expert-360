@@ -2,6 +2,7 @@
 // POST /api/comprendre  { "url": "exemple.ca" }  →  { profil }
 import { lirePage, liensServices, lienAnglais, parseSite } from "../lib/lecture.mjs";
 import { comprendreSite, texteDePage, iaDisponible } from "../lib/ia.mjs";
+import { lire, ecrire, cleDomaine } from "../lib/cache.mjs";
 
 const json = (body, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
 const CHEMINS = ["/services", "/nos-services", "/expertise", "/expertises", "/solutions"];
@@ -18,6 +19,12 @@ export default async (req) => {
   const site = { host: u.hostname.replace(/^www\./, ""), url: u.origin + "/" };
 
   const t0 = Date.now();
+  // Un même domaine garde le même profil pendant 30 jours : version FR, version EN ou sous-page, même résultat.
+  const cle = cleDomaine("profil", site.host);
+  if (body.fresh !== true) {
+    const memo = await lire(cle);
+    if (memo && memo.donnees && memo.donnees.profil) return json({ ...memo.donnees, cache: memo.t, ms: Date.now() - t0 });
+  }
   try {
     const accueil = await lirePage(new URL(site.url), 4000);
     const memeSite = (h) => { try { return new URL(h).hostname.replace(/^www\./, "") === accueil.final.hostname.replace(/^www\./, ""); } catch { return false; } };
@@ -41,7 +48,9 @@ export default async (req) => {
       telephoneCliquable: /href=["']tel:/i.test(accueil.html),
       versionAnglaise: Boolean(lienAnglais(accueil.html, accueil.final)),
     };
-    return json({ site: site.host, profil, anglais: Boolean(lienAnglais(accueil.html, accueil.final)), ms: Date.now() - t0 });
+    const reponse = { site: site.host, profil, anglais: Boolean(lienAnglais(accueil.html, accueil.final)) };
+    await ecrire(cle, reponse);
+    return json({ ...reponse, ms: Date.now() - t0 });
   } catch (e) {
     console.error("comprendre", site.host, String(e.message || e));
     return json({ error: "comprendre-echec", raison: String(e.name === "AbortError" ? "delai" : (e.message || e)).slice(0, 400), ms: Date.now() - t0 }, 502);

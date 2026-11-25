@@ -2,17 +2,21 @@
 // renvoyés par Keyword Planner. Les chiffres restent ceux de Google ; Claude ne fait que juger.
 // Accès par l'AI Gateway de Netlify : ANTHROPIC_API_KEY et ANTHROPIC_BASE_URL sont injectées par Netlify.
 
+import { estBruit, sansLieux } from "./filtre.mjs";
+
 export const MODELE_COMPRENDRE = process.env.AUDIT_MODELE || "claude-sonnet-5-5";
 export const MODELE_TRIER = process.env.AUDIT_MODELE_TRI || "claude-sonnet-5-5";
 
 export const iaDisponible = () => Boolean(process.env.ANTHROPIC_API_KEY);
+
+let temperatureRefusee = false;
 
 async function appelClaude({ model, system, user, maxTokens = 1500, timeoutMs = 8000 }) {
   const base = (process.env.ANTHROPIC_BASE_URL || "https://api.anthropic.com").replace(/\/$/, "");
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
-    const r = await fetch(base + "/v1/messages", {
+    const envoyer = (avecTemperature) => fetch(base + "/v1/messages", {
       method: "POST",
       signal: ctrl.signal,
       headers: {
@@ -20,8 +24,16 @@ async function appelClaude({ model, system, user, maxTokens = 1500, timeoutMs = 
         "x-api-key": process.env.ANTHROPIC_API_KEY,
         "anthropic-version": "2023-06-01",
       },
-      body: JSON.stringify({ model, max_tokens: maxTokens, system, messages: [{ role: "user", content: user }], ...(process.env.AUDIT_REFLEXION === "on" ? {} : { thinking: { type: "between_tools" } }) }),
+      body: JSON.stringify({ model, max_tokens: maxTokens, system, messages: [{ role: "user", content: user }],
+        ...(avecTemperature ? { temperature: 0 } : {}),
+        ...(process.env.AUDIT_REFLEXION === "on" ? {} : { thinking: { type: "between_tools" } }) }),
     });
+    // Température 0 : des réponses aussi constantes que possible. Si le modèle la refuse, on réessaie sans.
+    let r = await envoyer(process.env.AUDIT_TEMPERATURE !== "off" && !temperatureRefusee);
+    if (r.status === 400) {
+      const txt = await r.clone().text();
+      if (/temperature/i.test(txt)) { temperatureRefusee = true; r = await envoyer(false); }
+    }
     if (!r.ok) throw new Error("ia:" + r.status + ":" + (await r.text()).slice(0, 200));
     const j = await r.json();
     if (process.env.AUDIT_DEBUG) console.log("ia", model, j.usage, j.stop_reason);
@@ -37,7 +49,7 @@ async function appelClaude({ model, system, user, maxTokens = 1500, timeoutMs = 
 // Texte lisible d'une page : titres et paragraphes, sans scripts ni styles.
 export function texteDePage(html, max = 6000) {
   return String(html || "")
-    .replace(/<(script|style|noscript|svg|iframe)[\s\S]*?<\/\1>/gi, " ")
+    .replace(/<(script|style|noscript|svg|iframe|footer|address)[\s\S]*?<\/\1>/gi, " ")
     .replace(/<(h[1-4])[^>]*>/gi, "\n## ")
     .replace(/<(br|p|li|div|section|tr)[^>]*>/gi, "\n")
     .replace(/<[^>]+>/g, " ")
@@ -52,8 +64,10 @@ Ta tâche : comprendre son métier comme le ferait un expert humain, puis prépa
 Règles :
 - Décris ce que l'entreprise VEND réellement, pas les mots de son slogan ni les rubriques de son site (contact, blogue, carrière, adresse, confidentialité).
 - Liste chaque service vendu séparément, avec le vocabulaire qu'un client québécois taperait dans Google (ex. « drain français », « réparation fissure fondation », « formation licence RBQ »).
+- Ignore l'adresse, la ville du siège social, le pied de page, les coordonnées et les noms de lieux : ils ne décrivent pas un service. N'en tire jamais une recherche.
 - Au plus 8 services. Pour chaque service, donne 3 à 4 recherches COURTES en français (2 à 3 mots), le terme principal tel qu'un client le tape, sans ville ni prix : ex. « drain français », « fissure fondation », « réparation fondation », « licence rbq », « photographe drone ». Keyword Planner élargira lui-même vers les variantes (prix, ville, soumission).
-- Donne aussi 2 recherches courtes en anglais (ex. « foundation repair », « french drain ») si le site a une version anglaise ou une clientèle anglophone.
+- Donne TOUJOURS 2 recherches courtes en anglais par service (ex. « foundation repair », « french drain »), que le site soit en français ou en anglais : le marché québécois cherche dans les deux langues. Les recherches en français sont aussi toujours données, même si le site est en anglais.
+- Chaque recherche décrit un service vendu : jamais un nom de ville, de lieu ou de commerce seul (« hôtel », « Boucherville »).
 - Une recherche doit toujours être liée au secteur : jamais un mot seul ambigu (« acquisition », « sécurité », « pyrite » seul, « fondation » seul). Préfère le vocabulaire courant du client au jargon du site.
 - Liste les sens parasites à exclure : produits vendus en quincaillerie, travaux à faire soi-même, homonymes (ex. « fondation » au sens d'organisme de charité), emplois, définitions.
 - N'invente rien : si le site ne le dit pas, laisse le champ vide.
@@ -76,6 +90,7 @@ export async function comprendreSite({ host, pages, timeoutMs = 9000 }) {
   // Nettoyage : on garde une structure sûre et bornée.
   const str = (v, n = 120) => String(v || "").replace(/\s+/g, " ").trim().slice(0, n);
   const arr = (v, n, m = 80) => (Array.isArray(v) ? v : []).map((x) => str(x, m)).filter(Boolean).slice(0, n);
+  const depart = (a, n) => [...new Set(a.map(sansLieux))].filter((x) => x && !estBruit(x, { metier: p.metier, secteur: p.secteur, services: [] })).slice(0, n);
   return {
     entreprise: str(p.entreprise),
     metier: str(p.metier),
@@ -84,7 +99,7 @@ export async function comprendreSite({ host, pages, timeoutMs = 9000 }) {
     zone: str(p.zone),
     atouts: arr(p.atouts, 6, 120),
     services: (Array.isArray(p.services) ? p.services : []).slice(0, 10).map((s) => ({
-      nom: str(s.nom, 60), fr: arr(s.fr, 6), en: arr(s.en, 3),
+      nom: str(s.nom, 60), fr: depart(arr(s.fr, 8), 6), en: depart(arr(s.en, 6), 3),
     })).filter((s) => s.nom && s.fr.length),
     exclure: arr(p.exclure, 15, 100),
     concurrents_attendus: str(p.concurrents_attendus, 200),
@@ -96,7 +111,8 @@ export function profilValide(p) {
   if (!p || typeof p !== "object" || !Array.isArray(p.services)) return null;
   const str = (v, n = 120) => String(v || "").replace(/\s+/g, " ").trim().slice(0, n);
   const arr = (v, n, m = 80) => (Array.isArray(v) ? v : []).map((x) => str(x, m)).filter(Boolean).slice(0, n);
-  const services = p.services.slice(0, 10).map((s) => ({ nom: str(s && s.nom, 60), fr: arr(s && s.fr, 6), en: arr(s && s.en, 3) }))
+  const depart = (a, n) => [...new Set(a.map(sansLieux))].filter((x) => x && !estBruit(x, { metier: p.metier, secteur: p.secteur, services: [] })).slice(0, n);
+  const services = p.services.slice(0, 10).map((s) => ({ nom: str(s && s.nom, 60), fr: depart(arr(s && s.fr, 8), 6), en: depart(arr(s && s.en, 6), 3) }))
     .filter((s) => s.nom && s.fr.length);
   if (!services.length) return null;
   return {
@@ -113,9 +129,16 @@ export function profilValide(p) {
 }
 
 const SYSTEME_TRIER = `Tu es un analyste Google Ads senior au Québec. On te donne le profil d'une entreprise et une liste numérotée de recherches Google (avec leur volume mensuel).
-Garde uniquement les recherches qu'un client potentiel de CETTE entreprise ferait pour acheter un de SES services (numérotés dans le profil).
-Rejette aussi un terme large très recherché qui mélange surtout des intentions de bricolage ou d'achat de produit (ex. « pieux vissés » pour un patio, « vide sanitaire » pour l'isolation), sauf si la recherche précise le service de l'entreprise (ex. « pieux fondation maison »).
-Rejette : les produits vendus en magasin ou à faire soi-même, les homonymes et sens parasites, les recherches d'emploi ou de définition, les autres secteurs, les recherches trop vagues pour être liées au métier, les noms de marques.
+Pour chaque recherche, pose-toi UNE seule question : « la personne qui tape ça cherche-t-elle à acheter ou à demander un des services de CETTE entreprise (numérotés dans le profil) ? ». Si ce n'est pas clairement oui, rejette. En cas de doute, rejette.
+
+Garde seulement :
+- une recherche qui nomme un service du profil, ou le besoin précis que ce service règle ;
+- une recherche qui mêle un service et un lieu (ex. « forage Boucherville », « déménageur Montréal ») : le lieu est utile s'il accompagne un service.
+Rejette toujours :
+- une recherche qui n'est qu'un lieu, une ville, un commerce ou un service public (ex. « Boucherville », « hôtel de ville », « hôtel », « restaurant ») : elle n'exprime aucun besoin lié aux services de l'entreprise ;
+- les produits vendus en magasin ou à faire soi-même, les homonymes et sens parasites, les recherches d'emploi, de définition ou de formation générale, les autres secteurs, les recherches trop vagues pour être liées au métier, les noms de marques ;
+- un terme large très recherché qui mélange surtout des intentions de bricolage ou d'achat de produit (ex. « pieux vissés » pour un patio, « vide sanitaire » pour l'isolation), sauf si la recherche précise le service de l'entreprise (ex. « pieux fondation maison »).
+Un mot ou une recherche en anglais se juge de la même façon qu'un mot français.
 On te donne aussi une liste de noms repérés par Google comme marques : indique lesquels sont de vrais concurrents (entreprises qui vendent le même service), et non des magasins, des organismes publics, des fabricants de produits ou des médias.
 Pour chaque recherche, dans l'ordre, donne le numéro du service de l'entreprise auquel elle correspond (services numérotés à partir de 0), ou -1 pour la rejeter.
 Réponds uniquement avec ce JSON, sans aucune explication ni texte autour : {"s":[un nombre par recherche],"concurrents":["noms exacts"]}`;

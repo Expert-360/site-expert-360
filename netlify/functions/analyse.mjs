@@ -5,6 +5,8 @@
 
 import { lirePage, extraireMetier, liensServices, lienAnglais, NEGATIFS, MOTS_LARGES, parseSite as parseUrl } from "../lib/lecture.mjs";
 import { profilValide, trierMotsCles, iaDisponible } from "../lib/ia.mjs";
+import { filtreSansIA } from "../lib/filtre.mjs";
+import { lire, ecrire, cleDomaine } from "../lib/cache.mjs";
 
 const API = "https://googleads.googleapis.com/v24";
 const GEO_QUEBEC = "geoTargetConstants/20123";
@@ -283,6 +285,12 @@ export default async (req) => {
   const t0 = Date.now();
   // Profil du métier produit par Claude (/api/comprendre) : il guide Keyword Planner et le tri.
   const profil = iaDisponible() ? profilValide(body.profil) : null;
+  // Un même domaine garde le même résultat pendant 30 jours (version FR, EN ou sous-page : même rapport).
+  const cle = cleDomaine("analyse", site.host);
+  if (profil && body.fresh !== true) {
+    const memo = await lire(cle);
+    if (memo && memo.donnees && memo.donnees.apercu) return json({ ...memo.donnees, cache: memo.t });
+  }
 
   // 1. Le métier : ce que le site vend, lu dans son titre, sa description, ses titres et son menu.
   //    Le visiteur peut aussi le préciser lui-même (champ « metier », séparé par des virgules).
@@ -481,12 +489,17 @@ export default async (req) => {
   const base = all.filter((k) => duMetier(k) && !isBrand(k) && !isCompetitorSearch(k) && !isProduct(k) && !unMot(k));
   let market = base.filter(commercial);
   if (market.length < 5) market = base.filter((k) => k.keyword.trim().includes(" ")); // très petit secteur : au moins des recherches de plusieurs mots
-  market.sort((a, b) => b.volume - a.volume);
+  // Mode IA : même sans le tri de Claude, on retire les recherches qui ne sont qu'un lieu ou un commerce.
+  if (profil) market = filtreSansIA(market, profil).gardes;
+  market.sort((a, b) => b.volume - a.volume || a.keyword.localeCompare(b.keyword));
   // Tri par Claude : on ne garde que les recherches d'un client de CE métier, et les vrais concurrents.
   let ia = null;
   if (profil) {
     ia = { profil, tri: false };
-    const cands = all.filter((k) => !isBrand(k) && !isCompetitorSearch(k)).sort((a, b) => b.volume - a.volume).slice(0, 160);
+    // Filtre sans IA : retire les recherches qui ne sont qu'un lieu ou un commerce (« hôtel de ville », « Boucherville »).
+    const filtre = filtreSansIA(all.filter((k) => !isBrand(k) && !isCompetitorSearch(k)), profil);
+    ia.bruit = filtre.ecartes.length;
+    const cands = filtre.gardes.sort((a, b) => b.volume - a.volume || a.keyword.localeCompare(b.keyword)).slice(0, 160);
     const restant = Math.min(12000, 20000 - (Date.now() - t0));
     try {
       ia.budget = restant;
@@ -507,7 +520,10 @@ export default async (req) => {
           const ks = cands.filter((k, i) => tri.garder.has(i) && tri.service.get(i) === n).sort((x, y) => y.volume - x.volume);
           return { nom: sv.nom, volume: ks.reduce((t, k) => t + k.volume, 0), recherches: ks.slice(0, 4).map((k) => k.keyword) };
         }).filter((x) => x.volume > 0).sort((x, y) => y.volume - x.volume);
-        ia.ecartes = cands.filter((k) => !gardes.includes(k)).sort((x, y) => y.volume - x.volume).slice(0, 6).map((k) => ({ mot: k.keyword, volume: k.volume }));
+        const horsSujet = cands.filter((k) => !gardes.includes(k)).concat(filtre.ecartes);
+        ia.rejetes += filtre.ecartes.length;
+        ia.volumeRejete += filtre.ecartes.reduce((t, k) => t + k.volume, 0);
+        ia.ecartes = horsSujet.sort((x, y) => y.volume - x.volume).slice(0, 6).map((k) => ({ mot: k.keyword, volume: k.volume }));
       }
     } catch (e) {
       console.error("analyse:tri", site.host, String(e.message || e));
@@ -598,11 +614,11 @@ export default async (req) => {
     return estimer(budgets[i]);
   });
 
-  return json({
+  const reponse = {
     site: site.host,
     zone: "Québec",
     metier,
-    langue: "français",
+    langue: rawEn.length ? "français et anglais" : "français",
     ia,
     apercu: {
       score,
@@ -630,7 +646,10 @@ export default async (req) => {
       clicsEstimes: clicks,
       nbIdees: all.length,
     },
-  });
+  };
+  // On ne garde en mémoire que les analyses complètes (profil + tri réussis).
+  if (profil && ia && ia.tri) await ecrire(cle, reponse);
+  return json(reponse);
 };
 
 export const config = { path: "/api/analyse" };

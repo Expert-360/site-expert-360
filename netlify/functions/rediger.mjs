@@ -1,6 +1,7 @@
 // Audit Google Ads — étape 3 : rédiger « Ce que je remarque » et « Budget indicatif » avec Claude.
 // POST /api/rediger  { profil, chiffres }  →  { observations, budget, budget_note, negatifs }
 import { profilValide, redigerAudit, iaDisponible } from "../lib/ia.mjs";
+import { lire, ecrire, cleDomaine } from "../lib/cache.mjs";
 
 const json = (body, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
 
@@ -33,8 +34,17 @@ export default async (req) => {
       recherchesSurLaMarque: n(c.marque),
     },
   };
+  // Mêmes recommandations pour un même domaine pendant 30 jours (la rédaction doit rester comparable d'une visite à l'autre).
+  const host = String(body.site || "").toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+  const cle = /^[a-z0-9.-]+\.[a-z]{2,}$/.test(host) ? cleDomaine("redac", host) : null;
+  if (cle && body.fresh !== true) {
+    const memo = await lire(cle);
+    if (memo && memo.donnees && memo.donnees.observations) return json({ ...memo.donnees, cache: memo.t });
+  }
   try {
-    return json(await redigerAudit({ donnees, timeoutMs: 22000 }));
+    const rep = await redigerAudit({ donnees, timeoutMs: 22000 });
+    if (cle && rep.observations.length) await ecrire(cle, rep);
+    return json(rep);
   } catch (e) {
     console.error("rediger", String(e.message || e));
     return json({ error: "rediger-echec", raison: String(e.name === "AbortError" ? "delai" : (e.message || e)).slice(0, 160) }, 502);
