@@ -284,7 +284,7 @@ export default async (req) => {
   if (!site) return json({ error: "Adresse de site invalide. Exemple : votresite.ca" }, 400);
   const t0 = Date.now();
   // Profil du métier produit par Claude (/api/comprendre) : il guide Keyword Planner et le tri.
-  const profil = iaDisponible() ? profilValide(body.profil) : null;
+  const profil = profilValide(body.profil);
   // Un même domaine garde le même résultat pendant 30 jours (version FR, EN ou sous-page : même rapport).
   const cle = cleDomaine("analyse", site.host);
   if (profil && body.fresh !== true) {
@@ -495,7 +495,7 @@ export default async (req) => {
   // Tri par Claude : on ne garde que les recherches d'un client de CE métier, et les vrais concurrents.
   let ia = null;
   if (profil) {
-    ia = { profil, tri: false };
+    ia = { profil, tri: false, dispo: iaDisponible() };
     // Filtre sans IA : retire les recherches qui ne sont qu'un lieu ou un commerce (« hôtel de ville », « Boucherville »).
     const filtre = filtreSansIA(all.filter((k) => !isBrand(k) && !isCompetitorSearch(k)), profil);
     ia.bruit = filtre.ecartes.length;
@@ -504,6 +504,7 @@ export default async (req) => {
     try {
       ia.budget = restant;
       if (restant < 2000) throw new Error("temps");
+      if (!iaDisponible()) throw new Error("ia-indisponible");
       const tri = await trierMotsCles({ profil, mots: cands, marques: [...compMap.keys()].slice(0, 40), timeoutMs: restant });
       const ancien = new Set(market);
       const gardes = cands.filter((k, i) => tri.garder.has(i) || (tri.incertains.has(i) && ancien.has(k)));
