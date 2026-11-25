@@ -7,12 +7,17 @@ import { estBruit, sansLieux } from "./filtre.mjs";
 export const MODELE_COMPRENDRE = process.env.AUDIT_MODELE || "claude-sonnet-5-5";
 export const MODELE_TRIER = process.env.AUDIT_MODELE_TRI || "claude-sonnet-5-5";
 
-export const iaDisponible = () => Boolean(process.env.ANTHROPIC_API_KEY);
+// Repli : si Netlify n'injecte pas ANTHROPIC_*, on utilise les variables de l'AI Gateway, toujours définies.
+const cleIA = () => process.env.ANTHROPIC_API_KEY || process.env.NETLIFY_AI_GATEWAY_KEY || "";
+const baseIA = () => process.env.ANTHROPIC_API_KEY
+  ? (process.env.ANTHROPIC_BASE_URL || "https://api.anthropic.com")
+  : process.env.NETLIFY_AI_GATEWAY_BASE_URL ? process.env.NETLIFY_AI_GATEWAY_BASE_URL.replace(/\/$/, "") + "/anthropic" : "";
+export const iaDisponible = () => Boolean(cleIA() && baseIA());
 
 let temperatureRefusee = false;
 
 async function appelClaude({ model, system, user, maxTokens = 1500, timeoutMs = 8000 }) {
-  const base = (process.env.ANTHROPIC_BASE_URL || "https://api.anthropic.com").replace(/\/$/, "");
+  const base = baseIA().replace(/\/$/, "");
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
@@ -21,7 +26,8 @@ async function appelClaude({ model, system, user, maxTokens = 1500, timeoutMs = 
       signal: ctrl.signal,
       headers: {
         "content-type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_API_KEY,
+        "x-api-key": cleIA(),
+        authorization: "Bearer " + cleIA(),
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({ model, max_tokens: maxTokens, system, messages: [{ role: "user", content: user }],
