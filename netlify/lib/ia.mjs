@@ -140,6 +140,7 @@ Pour chaque recherche, pose-toi UNE seule question : « la personne qui tape ça
 Garde seulement :
 - une recherche qui nomme un service du profil, ou le besoin précis que ce service règle ;
 - une recherche qui mêle un service et un lieu (ex. « forage Boucherville », « déménageur Montréal ») : le lieu est utile s'il accompagne un service.
+Une recherche liée à un service du profil reste gardée même avec « gratuit », « free », « prix », « modèle » ou « générateur » (ex. « création de logo gratuite », « créer un site web gratuit ») : c'est un intérêt réel pour le service, qu'on traitera ensuite avec des mots-clés négatifs. Des variantes de la même recherche (accents, singulier/pluriel, anglais/français : « scie à béton », « scie a beton », « sciage de béton ») reçoivent la même décision.
 Rejette toujours :
 - une recherche qui n'est qu'un lieu, une ville, un commerce ou un service public (ex. « Boucherville », « hôtel de ville », « hôtel », « restaurant ») : elle n'exprime aucun besoin lié aux services de l'entreprise ;
 - les produits vendus en magasin ou à faire soi-même, les homonymes et sens parasites, les recherches d'emploi, de définition ou de formation générale, les autres secteurs, les recherches trop vagues pour être liées au métier, les noms de marques ;
@@ -203,7 +204,7 @@ Règles d'écriture :
 - Ne recommande pas ce que l'entreprise a déjà (voir « déjà en place »).
 - 5 observations, chacune en 2 phrases au plus.
 - Budget : un budget de DÉMARRAGE réaliste pour une PME québécoise, qui vise une part des recherches qualifiées (pas leur totalité). Calcule environ 25 à 40 % des recherches × 5 % de clics × CPC moyen, arrondis ; le total se situe d'habitude entre 1 000 et 4 000 $ par mois. Concentre le budget sur les services à fort volume ; un service à moins de 100 recherches par mois n'a pas de campagne seule.
-- Mots-clés négatifs : jamais un terme qui décrit un service de l'entreprise, ni une langue que le site sert (si le site a une version anglaise, n'exclus pas les recherches en anglais). Un budget par campagne (2 à 4 campagnes, regroupant les services), avec une fourchette mensuelle et l'ajustement saisonnier. 6 à 12 mots-clés négatifs.
+- Mots-clés négatifs : jamais un terme qui décrit un service de l'entreprise, ni une langue que le site sert (si le site a une version anglaise, n'exclus pas les recherches en anglais). Un budget par campagne (2 à 4 campagnes, regroupant les services), avec une fourchette mensuelle et l'ajustement saisonnier. 6 à 12 mots-clés négatifs. Inclure au départ les termes d'intention non commerciale (« gratuit », « free », « modèle », « template », « emploi », « cours »), sauf si l'entreprise les vend ; ils filtrent les recherches « gratuites » qui restent dans les volumes.
 
 Réponds uniquement en JSON, sans texte autour :
 {"observations":[{"titre":"","texte":""}],"budget":[{"campagne":"","min":0,"max":0,"saison":""}],"budget_note":"","negatifs":[""]}`;
