@@ -473,7 +473,7 @@ export default async (req) => {
   let concurrents = [...compMap.values()]
     .filter((c) => c.recherches >= 30)
     .sort((a, b) => b.recherches - a.recherches)
-    .slice(0, 8)
+    .slice(0, 40)
     .map(({ nom, recherches, motCle }) => ({ nom: titleCase(nom), recherches, motCle }));
 
   const brand = all.filter(isBrand);
@@ -503,18 +503,18 @@ export default async (req) => {
     const filtre = filtreSansIA(all.filter((k) => !isBrand(k) && !isCompetitorSearch(k)), profil);
     ia.bruit = filtre.ecartes.length;
     const cands = filtre.gardes.sort((a, b) => b.volume - a.volume || a.keyword.localeCompare(b.keyword)).slice(0, 160);
-    const restant = Math.min(12000, 20000 - (Date.now() - t0));
+    const restant = Math.min(15000, 23000 - (Date.now() - t0));
     try {
       ia.budget = restant;
       if (restant < 2000) throw new Error("temps");
       if (!iaDisponible()) throw new Error("ia-indisponible");
-      const tri = await trierMotsCles({ profil, mots: cands, marques: [...compMap.keys()].slice(0, 40), timeoutMs: restant });
+      const tri = await trierMotsCles({ profil, mots: cands, marques: concurrents.slice(0, 40).map((c) => c.nom), timeoutMs: restant });
       const ancien = new Set(market);
       const gardes = cands.filter((k, i) => tri.garder.has(i) || (tri.incertains.has(i) && ancien.has(k)));
       if (tri.incertains.size) ia.incertains = tri.incertains.size;
       if (gardes.length >= 3) {
         market = gardes.sort((a, b) => b.volume - a.volume);
-        concurrents = concurrents.filter((c) => tri.concurrents.has(c.nom.toLowerCase()));
+        concurrents = concurrents.filter((c) => tri.concurrents.has(c.nom.toLowerCase())).slice(0, 6);
         ia.tri = true;
         ia.gardes = gardes.length;
         ia.rejetes = cands.length - gardes.length;
@@ -536,6 +536,7 @@ export default async (req) => {
       ia.ms = Date.now() - t0;
     }
   }
+  if (!(ia && ia.tri)) concurrents = concurrents.slice(0, 8);
   if (!market.length) {
     return json({ site: site.host, empty: true, message: "Pas assez de recherches Google au Québec pour ce métier." });
   }
