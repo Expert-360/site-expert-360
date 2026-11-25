@@ -325,8 +325,11 @@ export default async (req) => {
       const en = [...new Set(profil.services.flatMap((x) => x.en))].slice(0, 20);
       const lots = [];
       for (let i = 0; i < fr.length; i += 20) lots.push(fr.slice(i, i + 20));
+      // Formes « à la recherche d'une entreprise » (ex. « entreprise pavé uni ») : elles font sortir les noms d'entreprises, donc les concurrents.
+      const prest = [...new Set(profil.services.slice(0, 3).map((x) => x.fr[0]).filter(Boolean).flatMap((t) => ["entreprise " + t, "compagnie " + t]))];
       const res = await Promise.all([
         ...lots.map((l) => keywordIdeas(token, { keywordSeed: { keywords: l } })),
+        prest.length ? keywordIdeas(token, { keywordSeed: { keywords: prest } }).catch(() => []) : Promise.resolve([]),
         en.length ? keywordIdeas(token, { keywordSeed: { keywords: en } }, LANG_EN).catch(() => []) : Promise.resolve([]),
       ]);
       rawEn = res.pop();

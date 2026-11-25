@@ -221,7 +221,7 @@
   function renderRivaux(r) {
     var box = $('c-rivaux'); box.innerHTML = '';
     var rows = (r.concurrents || []).slice(0, 3).map(function (c) { return { nom: c.nom, v: c.recherches }; });
-    if (!rows.length) { box.appendChild(el('p', 'chart-empty', 'Aucun concurrent ne s’impose par son nom dans vos recherches : le terrain est libre.')); $('c-rivaux-note').textContent = ''; return; }
+    if (!rows.length) { box.appendChild(el('p', 'chart-empty', 'Google ne montre pas de concurrent direct par nom de marque ici. Les annonces affichées dans votre région se regardent dans l’audit complet.')); $('c-rivaux-note').textContent = ''; return; }
     rows.push({ nom: 'Vous (' + data.site + ')', v: r.recherchesMarque || 0, me: true });
     var max = Math.max.apply(null, rows.map(function (x) { return x.v; })) || 1;
     var wrap = el('div', 'hbars');
@@ -358,7 +358,7 @@
     renderKeywords(r.motsCles);
 
     var comps = r.concurrents || [];
-    $('r-comp-title').textContent = comps.length ? 'Qui capte les recherches de votre secteur' : 'Aucun concurrent ne domine';
+    $('r-comp-title').textContent = comps.length ? 'Qui capte les recherches de votre secteur' : 'Pas de concurrent direct par nom de marque';
     rankList($('r-comp-list'), comps.map(function (c) { return { name: c.nom, value: c.recherches, label: nf.format(c.recherches) + '/mois' }; }),
       { bars: true, unit: 'concurrents', empty: "Personne n'a imposé son nom dans vos recherches : le terrain est libre." });
     $('r-comp-note').textContent = comps.length ? 'Recherches mensuelles sur leur nom au Québec.' : '';
@@ -456,8 +456,8 @@
       h += sec('07', 'Budget indicatif', verrou('Le budget conseillé par campagne, avec l’ajustement saisonnier.'));
     } else {
       var cs = r.concurrents || [];
-      h += sec('05', 'Concurrents', '<div class="ria-card">' + (cs.length ? '<table><tr><th>Concurrent</th><th>Recherche principale</th><th class="n">Recherches par mois</th></tr>' +
-        cs.map(function (c) { return '<tr><td><b>' + esc(c.nom) + '</b></td><td>' + esc(c.motCle) + '</td><td class="n">' + nf.format(c.recherches) + '</td></tr>'; }).join('') + '</table>' : '<p>Aucun concurrent n’a imposé son nom dans les recherches du secteur : le terrain est ouvert.</p>') +
+      h += sec('05', 'Concurrents', '<div class="ria-card">' + (cs.length ? '<table><tr><th>Concurrent</th><th>Recherche principale</th><th class="n">Recherches de leur nom par mois</th></tr>' +
+        cs.map(function (c) { return '<tr><td><b>' + esc(c.nom) + '</b></td><td>' + esc(c.motCle) + '</td><td class="n">' + nf.format(c.recherches) + '</td></tr>'; }).join('') + '</table>' : '<p>Google ne montre pas de concurrent direct par nom de marque pour ces recherches. Cela ne veut pas dire que personne ne se bat pour elles : les annonces réellement affichées dans votre région se regardent dans l’audit complet.</p>') +
         (p.concurrents_attendus ? '<p class="ria-note">Concurrents directs à surveiller : ' + esc(p.concurrents_attendus) + '. Leurs annonces actives se vérifient dans le Centre de transparence des annonces de Google.</p>' : '') + '</div>');
       if (!redac) {
         h += sec('06', 'Ce que je remarque', '<div class="ria-card"><p class="ria-note">Rédaction des recommandations en cours…</p></div>');
