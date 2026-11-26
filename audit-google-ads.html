@@ -27,7 +27,9 @@
 <style>
 /* MODIF 1-2 : hero centré, remonté (plus de fil d'Ariane), formulaire sur deux lignes */
 .audit-hero{padding-top:clamp(24px,3.5vw,48px)}
-.audit-intro{display:flex;flex-direction:column;align-items:center;text-align:center;gap:24px;max-width:860px;margin:0 auto}
+.audit-intro{display:flex;flex-direction:column;align-items:center;text-align:center;gap:24px;max-width:1100px;margin:0 auto}
+/* Titre sur 2 lignes en desktop : plus large, légèrement plus petit, lignes équilibrées */
+.audit-intro h1{font-size:clamp(30px,3.9vw,54px);text-wrap:balance;max-width:1040px}
 .audit-form{display:flex;flex-direction:column;gap:12px;width:100%;max-width:580px;margin:8px auto 0}
 .audit-form input{width:100%;min-height:60px;border:1.5px solid var(--navy);border-radius:999px;padding:0 26px;font:inherit;font-size:18px;background:#fff;color:var(--navy)}
 .audit-form input:focus{outline:3px solid var(--blue);outline-offset:2px}
