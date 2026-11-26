@@ -42,7 +42,8 @@
   };
 
   var lastUrl = '';
-  var IA = /[?&]ia=1\b/.test(location.search);
+  // L'analyse guidée par l'IA est maintenant la version par défaut, rapport complet sans blocage.
+  var IA = true;
 
   form.addEventListener('submit', function (e) {
     e.preventDefault();
@@ -76,7 +77,7 @@
       if (res.j.empty) throw new Error(res.j.message);
       data = res.j; redac = null; redacEnCours = false;
       // Phase de test (?ia=1) : le rapport s'affiche en entier, sans demander de courriel.
-      var ouvert = Boolean(IA && data.ia && data.ia.tri);
+      var ouvert = true;
       unlocked = ouvert;
       if (ouvert) $('unlock').classList.add('done');
       await wait(300);
