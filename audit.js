@@ -75,6 +75,8 @@
       }
       if (!res.ok) throw new Error(res.j.error || 'Erreur');
       if (res.j.empty) throw new Error(res.j.message);
+      // Jamais de rapport dégradé : si l'IA n'a pas pu trier, on le dit plutôt que d'afficher de mauvais mots-clés.
+      if (!(res.j.ia && res.j.ia.tri)) throw new Error("L'analyse est temporairement indisponible. Réessayez dans quelques minutes.");
       data = res.j; redac = null; redacEnCours = false;
       // Phase de test (?ia=1) : le rapport s'affiche en entier, sans demander de courriel.
       var ouvert = true;
